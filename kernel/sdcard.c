@@ -74,23 +74,23 @@ static void sd_end_cmd(void) {
 }
 
 /*
- * Be noticed: all commands & responses below 
- * 		are in SPI mode format. May differ from 
- * 		what they are in SD mode. 
+ * Be noticed: all commands & responses below
+ * 		are in SPI mode format. May differ from
+ * 		what they are in SD mode.
  */
 
-#define SD_CMD0 	0 
+#define SD_CMD0 	0
 #define SD_CMD8 	8
 #define SD_CMD58 	58 		// READ_OCR
 #define SD_CMD55 	55 		// APP_CMD
 #define SD_ACMD41 	41 		// SD_SEND_OP_COND
-#define SD_CMD16 	16 		// SET_BLOCK_SIZE 
+#define SD_CMD16 	16 		// SET_BLOCK_SIZE
 #define SD_CMD17 	17 		// READ_SINGLE_BLOCK
-#define SD_CMD24 	24 		// WRITE_SINGLE_BLOCK 
+#define SD_CMD24 	24 		// WRITE_SINGLE_BLOCK
 #define SD_CMD13 	13 		// SEND_STATUS
 
 /*
- * Read sdcard response in R1 type. 
+ * Read sdcard response in R1 type.
  */
 static uint8 sd_get_response_R1(void) {
 	uint8 result;
@@ -106,17 +106,17 @@ static uint8 sd_get_response_R1(void) {
 	return 0xff;
 }
 
-/* 
- * Read the rest of R3 response 
- * Be noticed: frame should be at least 4-byte long 
+/*
+ * Read the rest of R3 response
+ * Be noticed: frame should be at least 4-byte long
  */
 static void sd_get_response_R3_rest(uint8 *frame) {
 	sd_read_data(frame, 4);
 }
 
-/* 
- * Read the rest of R7 response 
- * Be noticed: frame should be at least 4-byte long 
+/*
+ * Read the rest of R7 response
+ * Be noticed: frame should be at least 4-byte long
  */
 static void sd_get_response_R7_rest(uint8 *frame) {
 	sd_read_data(frame, 4);
@@ -140,14 +140,14 @@ static int switch_to_SPI_mode(void) {
 	return 0;
 }
 
-// verify supply voltage range 
+// verify supply voltage range
 static int verify_operation_condition(void) {
 	uint64 result;
 
-	// Stores the response reversely. 
-	// That means 
-	// frame[2] - VCA 
-	// frame[3] - Check Pattern 
+	// Stores the response reversely.
+	// That means
+	// frame[2] - VCA
+	// frame[3] - Check Pattern
 	uint8 frame[4];
 
 	sd_send_cmd(SD_CMD8, 0x01aa, 0x87);
@@ -167,10 +167,10 @@ static int verify_operation_condition(void) {
 	return 0xff;
 }
 
-// read OCR register to check if the voltage range is valid 
-// this step is not mandotary, but I advise to use it 
+// read OCR register to check if the voltage range is valid
+// this step is not mandotary, but I advise to use it
 static int read_OCR(void) {
-	uint64 result;
+	uint64 result=0;
 	uint8 ocr[4];
 
 	int timeout;
@@ -183,8 +183,8 @@ static int read_OCR(void) {
 		sd_end_cmd();
 
 		if (
-			0x01 == result && // R1 response in idle status 
-			(ocr[1] & 0x1f) && (ocr[2] & 0x80) 	// voltage range valid 
+			0x01 == result && // R1 response in idle status
+			(ocr[1] & 0x1f) && (ocr[2] & 0x80) 	// voltage range valid
 		) {
 			return 0;
 		}
@@ -196,7 +196,7 @@ static int read_OCR(void) {
 	return 0xff;
 }
 
-// send ACMD41 to tell sdcard to finish initializing 
+// send ACMD41 to tell sdcard to finish initializing
 static int set_SDXC_capacity(void) {
 	uint8 result = 0xff;
 
@@ -218,16 +218,16 @@ static int set_SDXC_capacity(void) {
 		}
 	}
 
-	// timeout! 
+	// timeout!
 	printf("set_SDXC_capacity() timeout!\n");
 	printf("result = %d\n", result);
 	return 0xff;
 }
 
-// Used to differ whether sdcard is SDSC type. 
+// Used to differ whether sdcard is SDSC type.
 static int is_standard_sd = 0;
 
-// check OCR register to see the type of sdcard, 
+// check OCR register to see the type of sdcard,
 // thus determine whether block size is suitable to buffer size
 static int check_block_size(void) {
 	uint8 result = 0xff;
@@ -253,7 +253,7 @@ static int check_block_size(void) {
 			else {
 				printf("SDSC detected, setting block size\n");
 
-				// setting SD card block size to BSIZE 
+				// setting SD card block size to BSIZE
 				int timeout = 0xff;
 				int result = 0xff;
 				while (--timeout) {
@@ -275,7 +275,7 @@ static int check_block_size(void) {
 		}
 	}
 
-	// timeout! 
+	// timeout!
 	printf("check_OCR() timeout!\n");
 	printf("result = %d\n", result);
 	return 0xff;
@@ -295,20 +295,20 @@ static int sd_init(void) {
 	//SD_CS_HIGH();
 	SD_CS_LOW();
 
-	// send dummy bytes for 80 clock cycles 
-	for (int i = 0; i < 10; i ++) 
+	// send dummy bytes for 80 clock cycles
+	for (int i = 0; i < 10; i ++)
 		frame[i] = 0xff;
 	sd_write_data(frame, 10);
 
-	if (0 != switch_to_SPI_mode()) 
+	if (0 != switch_to_SPI_mode())
 		return 0xff;
-	if (0 != verify_operation_condition()) 
+	if (0 != verify_operation_condition())
 		return 0xff;
-	if (0 != read_OCR()) 
+	if (0 != read_OCR())
 		return 0xff;
-	if (0 != set_SDXC_capacity()) 
+	if (0 != set_SDXC_capacity())
 		return 0xff;
-	if (0 != check_block_size()) 
+	if (0 != check_block_size())
 		return 0xff;
 
 	return 0;
@@ -397,12 +397,12 @@ void sdcard_write_sector(uint8 *buf, int sectorno) {
 		panic("sdcard: fail to write");
 	}
 
-	// sending data to be written 
+	// sending data to be written
 	sd_write_data(&START_BLOCK_TOKEN, 1);
 	sd_write_data_dma(buf, BSIZE);
 	sd_write_data(dummy_crc, 2);
 
-	// waiting for sdcard to finish programming 
+	// waiting for sdcard to finish programming
 	uint8 result;
 	int timeout = 0xfff;
 	while (--timeout) {
@@ -415,7 +415,7 @@ void sdcard_write_sector(uint8 *buf, int sectorno) {
 		releasesleep(&sdcard_lock);
 		panic("sdcard: invalid response token");
 	}
-	
+
 	timeout = 0xffffff;
 	while (--timeout) {
 		sd_read_data(&result, 1);
@@ -427,7 +427,7 @@ void sdcard_write_sector(uint8 *buf, int sectorno) {
 	}
 	sd_end_cmd();
 
-	// send SD_CMD13 to check if writing is correctly done 
+	// send SD_CMD13 to check if writing is correctly done
 	uint8 error_code = 0xff;
 	sd_send_cmd(SD_CMD13, 0, 0);
 	result = sd_get_response_R1();
@@ -444,13 +444,13 @@ void sdcard_write_sector(uint8 *buf, int sectorno) {
 	// leave critical section!
 }
 
-// A simple test for sdcard read/write test 
+// A simple test for sdcard read/write test
 void test_sdcard(void) {
 	uint8 buf[BSIZE];
 
 	for (int sec = 0; sec < 5; sec ++) {
 		for (int i = 0; i < BSIZE; i ++) {
-			buf[i] = 0xaa;		// data to be written 
+			buf[i] = 0xaa;		// data to be written
 		}
 
 		sdcard_write_sector(buf, sec);
