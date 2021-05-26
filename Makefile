@@ -80,9 +80,9 @@ CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -I.
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
-ifeq ($(mode), debug) 
-CFLAGS += -DDEBUG 
-endif 
+ifeq ($(mode), debug)
+CFLAGS += -DDEBUG
+endif
 
 ifeq ($(platform), qemu)
 CFLAGS += -D QEMU
@@ -104,7 +104,7 @@ $T/kernel: $(OBJS) $(linker) $U/initcode
 	@$(LD) $(LDFLAGS) -T $(linker) -o $T/kernel $(OBJS)
 	@$(OBJDUMP) -S $T/kernel > $T/kernel.asm
 	@$(OBJDUMP) -t $T/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $T/kernel.sym
-  
+
 build: $T/kernel userprogs
 
 # Compile RustSBI
@@ -131,23 +131,21 @@ endif
 
 QEMUOPTS = -machine virt -kernel $T/kernel -m 8M -nographic
 
-# use multi-core 
+# use multi-core
 QEMUOPTS += -smp $(CPUS)
 
 QEMUOPTS += -bios $(RUSTSBI)
 
 # import virtual disk image
-QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0 
+QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
-run: build
+all: build
 ifeq ($(platform), k210)
 	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
 	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
 	@dd if=$(image) of=$(k210) bs=128k seek=1
-	@$(OBJDUMP) -D -b binary -m riscv $(k210) > $T/k210.asm
-	@sudo chmod 777 $(k210-serialport)
-	@python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
+	cp $(k210) ./k210.bin
 else
 	@$(QEMU) $(QEMUOPTS)
 endif
@@ -241,7 +239,7 @@ sdcard: userprogs
 	@sudo cp $U/_sh $(dst)/sh
 	@sudo cp README $(dst)/README
 
-clean: 
+clean:
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*/*.o */*.d */*.asm */*.sym \
 	$T/* \
