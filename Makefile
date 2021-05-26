@@ -3,7 +3,7 @@ platform	:= k210
 # mode := debug
 mode := release
 K=kernel
-U=user
+U=xv6-user
 T=target
 
 OBJS =
