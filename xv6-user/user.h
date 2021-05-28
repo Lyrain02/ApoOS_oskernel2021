@@ -33,6 +33,9 @@ int remove(char *filename);
 int trace(int mask);
 int sysinfo(struct sysinfo *);
 int rename(char *old, char *new);
+uint64 clone(int(*fcn)(void), void* arg, void* stack, int stack_size, unsigned long flags);//ljn
+int getppid(void);
+int execve( char *path, char **argv);
 
 // ulib.c
 int stat(const char*, struct stat*);
