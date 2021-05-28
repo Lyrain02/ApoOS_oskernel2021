@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "riscv.h"
+#include "proc.h"
 
 void            kvminit(void);
 void            kvminithart(void);
@@ -32,5 +33,4 @@ int             copyout2(uint64 dstva, char *src, uint64 len);
 int             copyin2(char *dst, uint64 srcva, uint64 len);
 int             copyinstr2(char *dst, uint64 srcva, uint64 max);
 void            vmprint(pagetable_t pagetable);
-
 #endif 

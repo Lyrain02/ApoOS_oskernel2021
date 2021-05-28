@@ -359,9 +359,9 @@ sys_getcwd(void)
 
   // if (copyout(myproc()->pagetable, addr, s, strlen(s) + 1) < 0)
   if (copyout2(addr, s, strlen(s) + 1) < 0)
-    return NULL;
+    return -1;
   
-  return addr;
+  return 0;
 
 }
 

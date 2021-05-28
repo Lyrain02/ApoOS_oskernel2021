@@ -9,9 +9,6 @@
 #include "include/spi.h"
 #include "include/sdcard.h"
 
-#undef SPI_CHIP_SELECT_3 
-#define SPI_CHIP_SELECT_3 0
-
 void SD_CS_HIGH(void) {
     gpiohs_set_pin(7, GPIO_PV_HIGH);
 }
@@ -173,7 +170,7 @@ static int verify_operation_condition(void) {
 // read OCR register to check if the voltage range is valid 
 // this step is not mandotary, but I advise to use it 
 static int read_OCR(void) {
-	uint64 result=0;
+	uint64 result = 0;
 	uint8 ocr[4];
 
 	int timeout;
