@@ -127,7 +127,7 @@ QEMUOPTS = -machine virt -bios $(RUSTSBI) -kernel $T/kernel -m 128M -smp $(CPUS)
 QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0 
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
-run: build
+all: build
 ifeq ($(platform), k210)
 	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
 	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
