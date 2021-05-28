@@ -16,3 +16,4 @@ kernel/include/*.back.h
 kernel/include/*.example.h
 target/*
 .idea
+k210.bin
