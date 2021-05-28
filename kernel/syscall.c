@@ -147,9 +147,29 @@ static uint64 (*syscalls[])(void) = {
   [SYS_trace]       sys_trace,
   [SYS_sysinfo]     sys_sysinfo,
   [SYS_rename]      sys_rename,
+<<<<<<< HEAD
   [SYS_clone]       sys_clone,
   [SYS_getppid]     sys_getppid,
   [SYS_execve]      sys_execve,
+=======
+//  [64] sys_write,
+//  [93] sys_exit,
+//  [220] sys_fork,
+//  [260] sys_wait,
+//  [59] sys_pipe,
+//  [49] sys_chdir,
+//  [56] sys_open,
+//  [57] sys_close,
+//  [61] sys_readdir, //暂定
+//  [63] sys_read,
+//  [34] sys_mkdir,
+//  [80] sys_fstat,
+//  [221] sys_exec,
+//  [172] sys_getpid,
+//  [214] sys_sbrk,
+//  [160] sys_sysinfo,
+//  [101] sys_sleep
+>>>>>>> parent of cef286d (Revert "update")
 };
 
 static char *sysnames[] = {
