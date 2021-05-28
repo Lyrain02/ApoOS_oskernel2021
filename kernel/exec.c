@@ -115,6 +115,49 @@ int exec(char *path, char **argv)
   uvmclear(pagetable, sz-2*PGSIZE);
   sp = sz;
   stackbase = sp - PGSIZE;
+  //添加exit系统调用
+  // uint64 exit_base = stackbase - PGSIZE;
+  // uchar* p_exit ;
+  // p_exit = (uchar*)exit_base;
+  // uchar exit_ecall[] = {
+
+  //       0x93, 0x08, 0x20, 0x00,     // li a7, 2 
+  //       0x73, 0x00, 0x00, 0x00,     // ecall 
+  // };
+  // *(exit_base + 1 ) = '1';
+  // {
+  //   int i;
+  //   for(i = 0; i < 8;i ++){
+  //     // *(p_exit + i) = exit_ecall[i];
+  //     printf("%d\n" ,exit_ecall[i] );
+  //   }
+  // }
+  // p->trapframe->ra = (uint64)p_exit;
+  uint64 sz2;
+  if((sz2 = uvmalloc(pagetable, kpagetable, sz, sz + PGSIZE)) == 0)
+    goto bad;
+  sz = sz2;
+  //uvmclear(pagetable, sz-PGSIZE);
+  // printf("%x \n",sz2);
+  char exit_ecall[] = {
+
+        0x93, 0x08, 0x20, 0x00,     // li a7, 2 
+        0x73, 0x00, 0x00, 0x00,     // ecall 
+  };
+
+  if(copyout(pagetable,sz2 - PGSIZE,exit_ecall,9) < 0) printf("..1111\n");
+  char buff[100];
+
+  copyin(pagetable,buff,sz2 - PGSIZE,9);
+
+  // printf("%x\n",buff[0]);
+  // int c1 = copyout(pagetable,sz2,b,100);
+  // char buff[100];
+  // int c = copyin(pagetable,buff,sz2,100);
+  // printf("%s.............................%d %d\n",buff,c,c1);
+
+  p->trapframe->ra=(uint64)(sz2-PGSIZE);
+  //------------------------------
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
@@ -124,8 +167,11 @@ int exec(char *path, char **argv)
     sp -= sp % 16; // riscv sp must be 16-byte aligned
     if(sp < stackbase)
       goto bad;
+    // printf("%s.....\n",argv[argc]);
     if(copyout(pagetable, sp, argv[argc], strlen(argv[argc]) + 1) < 0)
       goto bad;
+    // if(copyin(pagetable,buff,sp ,strlen(argv[argc]) + 1) < 0 ) printf("1 \n");
+    // printf("%s .... \n" , buff);
     ustack[argc] = sp;
   }
   ustack[argc] = 0;
@@ -157,6 +203,7 @@ int exec(char *path, char **argv)
   p->sz = sz;
   p->trapframe->epc = elf.entry;  // initial program counter = main
   p->trapframe->sp = sp; // initial stack pointer
+  //p->trapframe->ra=(uint64)exit_base; // exit 的系统调用
   proc_freepagetable(oldpagetable, oldsz);
   w_satp(MAKE_SATP(p->kpagetable));
   sfence_vma();
