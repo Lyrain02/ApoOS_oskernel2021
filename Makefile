@@ -145,6 +145,8 @@ ifeq ($(platform), k210)
 	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
 	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
 	@dd if=$(image) of=$(k210) bs=128k seek=1
+#	@sudo chmod 777 $(k210-serialport)
+#	@python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
 	cp $(k210) ./k210.bin
 else
 	@$(QEMU) $(QEMUOPTS)
