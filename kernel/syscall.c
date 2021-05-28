@@ -149,10 +149,13 @@ static uint64 (*syscalls[])(void) = {
   [SYS_rename]      sys_rename,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   [SYS_clone]       sys_clone,
   [SYS_getppid]     sys_getppid,
   [SYS_execve]      sys_execve,
 =======
+=======
+>>>>>>> parent of ba7bb97 (update)
 =======
 >>>>>>> parent of ba7bb97 (update)
   [64] sys_write,
@@ -173,6 +176,9 @@ static uint64 (*syscalls[])(void) = {
   [160] sys_sysinfo,
   [101] sys_sleep
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of ba7bb97 (update)
+=======
 >>>>>>> parent of ba7bb97 (update)
 =======
 >>>>>>> parent of ba7bb97 (update)
