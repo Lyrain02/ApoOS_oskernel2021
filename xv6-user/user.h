@@ -44,6 +44,7 @@ int strcmp(const char*, const char*);
 void fprintf(int, const char*, ...);
 void printf(const char*, ...);
 char* gets(char*, int max);
+char* fgets(int, char*, int max);
 uint strlen(const char*);
 void* memset(void*, int, uint);
 void* malloc(uint);
