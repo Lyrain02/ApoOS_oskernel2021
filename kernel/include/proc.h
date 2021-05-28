@@ -43,10 +43,6 @@ enum procstate { UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
 struct proc {
-  //ljn
-  struct proc *pthread; // Parent thread
-  void *ustack; // User thread stack
-  
   struct spinlock lock;
 
   // p->lock must be held when using these:
@@ -56,7 +52,6 @@ struct proc {
   int killed;                  // If non-zero, have been killed
   int xstate;                  // Exit status to be returned to parent's wait
   int pid;                     // Process ID
-
 
   // these are private to the process, so p->lock need not be held.
   uint64 kstack;               // Virtual address of kernel stack
@@ -69,7 +64,6 @@ struct proc {
   struct dirent *cwd;          // Current directory
   char name[16];               // Process name (debugging)
   int tmask;                    // trace mask
-
 };
 
 void            reg_info(void);
@@ -97,6 +91,5 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 uint64          procnum(void);
 void            test_proc_init(int);
-uint64          getppid(void);
 
 #endif

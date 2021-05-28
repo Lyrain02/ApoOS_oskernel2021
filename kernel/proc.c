@@ -47,7 +47,6 @@ void reg_info(void) {
   printf("}\n");
 }
 
-
 // initialize the proc table at boot time.
 void
 procinit(void)
@@ -107,7 +106,6 @@ myproc(void) {
   pop_off();
   return p;
 }
-
 
 int
 allocpid() {
@@ -193,8 +191,6 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
-  
-  
 }
 
 // Create a user page table for a given process,
@@ -295,7 +291,6 @@ userinit(void)
   
   // allocate one user page and copy init's instructions
   // and data into it.
-
   uvminit(p->pagetable , p->kpagetable, initcode, sizeof(initcode));
   p->sz = PGSIZE;
 
@@ -359,7 +354,6 @@ fork(void)
 
   np->parent = p;
 
-
   // copy tracing mask from parent.
   np->tmask = p->tmask;
 
@@ -374,19 +368,17 @@ fork(void)
     if(p->ofile[i])
       np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = edup(p->cwd);
-    safestrcpy(np->name, p->name, sizeof(p->name));
+
+  safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
 
   np->state = RUNNABLE;
 
-
-
   release(&np->lock);
 
   return pid;
 }
-
 
 // Pass p's abandoned children to init.
 // Caller must hold p->lock.
@@ -414,22 +406,12 @@ reparent(struct proc *p)
   }
 }
 
-//ljn
-uint64 getppid(void){
-  struct proc *p;
-  p=myproc();
-  return p->parent->pid;
-      
-}
-
-
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait().
 void
 exit(int status)
 {
-  // printf("exit running \n");
   struct proc *p = myproc();
 
   if(p == initproc)
@@ -516,14 +498,16 @@ wait(uint64 addr)
         if(np->state == ZOMBIE){
           // Found one.
           pid = np->pid;
-          if(addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
+          if(addr != 0 && copyout(p->pagetable, addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
             release(&np->lock);
             release(&p->lock);
+            printf("wait:-1\n");
             return -1;
           }
           freeproc(np);
           release(&np->lock);
           release(&p->lock);
+            printf("wait:pid\n");
           return pid;
         }
         release(&np->lock);
@@ -533,7 +517,8 @@ wait(uint64 addr)
     // No point waiting if we don't have any children.
     if(!havekids || p->killed){
       release(&p->lock);
-      return -1;
+        printf("wait:0\n");
+      return 0;
     }
     
     // Wait for a child to exit.
@@ -813,45 +798,4 @@ procnum(void)
 
   return num;
 }
-uint64 clone(int(*fcn)(void), void* arg, void* stack,int stack_size, unsigned long flags)
- {
- // cprintf("in clone, stack start addr = %p\n", stack); //打印本线程的堆栈
- struct proc *curproc = myproc(); // 记录发出 clone 的进程（np->pthread 记录的父线程）
- struct proc *np;
-
- if((np = allocproc()) == 0) //为新线程分配 PCB/TCB
- return -1; 
- 
- //由于共享进程映像，只需使用同一个页表即可，无需拷贝内容
- np->pagetable = curproc->pagetable; // 线程间共用同一个页表
- np->sz = curproc->sz;
- np->pthread = curproc; // exit 时用于找到父进程并唤醒
- np->ustack = stack; //设置自己的线程栈`
- np->parent = 0;
- *np->trapframe = *curproc->trapframe; // 继承 trapframe
-
- int* sp = (int*)stack + 4096 - 8; //下面将在线程栈填写8字节内容
- //在内核栈中“伪造”现场，假装成返回地址是 fcn、用户堆栈是线程栈
- np->trapframe->ra = (uint64)fcn;
- np->trapframe->sp = (uint64)sp; // top of stack  栈指针
- np->trapframe->a1 = (uint64)sp; // 栈帧指针  被调用者保存
- np->trapframe->a0 = 0; //返回值
-
- // 在用户态栈“伪造”现场，将参数和返回地址（无用的）保存在里面
- *(sp + 1) = (uint64)arg; // *(np->tf->esp+4) = (int)arg
- *sp = 0xffffffff; // 返回地址（没有用到）
-
- for(int i = 0; i < NOFILE; i++) // 复制文件描述符
- if(curproc->ofile[i])
- np->ofile[i] = filedup(curproc->ofile[i]);
- np->cwd = edup(curproc->cwd);
-
- safestrcpy(np->name, curproc->name, sizeof(curproc->name)); 
- int pid = np->pid;
- 
- np->state = RUNNABLE;
- release(&np->lock);
- // 返回新线程的 pid
- return pid;
- }
 

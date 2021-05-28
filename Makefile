@@ -1,6 +1,6 @@
 platform	:= k210
 #platform	:= qemu
-#mode := debug
+# mode := debug
 mode := release
 K=kernel
 U=xv6-user
@@ -65,8 +65,8 @@ else
 RUSTSBI = ./bootloader/SBI/sbi-qemu
 endif
 
- TOOLPREFIX	:= riscv64-unknown-elf-
-#TOOLPREFIX	:= riscv64-unknown-linux-gnu-
+# TOOLPREFIX	:= riscv64-unknown-elf-
+TOOLPREFIX	:= riscv64-unknown-elf-
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
@@ -80,9 +80,9 @@ CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -I.
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
-ifeq ($(mode), debug) 
-CFLAGS += -DDEBUG 
-endif 
+ifeq ($(mode), debug)
+CFLAGS += -DDEBUG
+endif
 
 ifeq ($(platform), qemu)
 CFLAGS += -D QEMU
@@ -98,38 +98,10 @@ ifeq ($(platform), qemu)
 linker = ./linker/qemu.ld
 endif
 
-all: build  $(UPROGS)
-ifeq ($(platform), k210)
-	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
-	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
-	@dd if=$(image) of=$(k210) bs=128k seek=1
-	@$(OBJDUMP) -D -b binary -m riscv $(k210) > $T/k210.asm
-else
-	@$(QEMU) $(QEMUOPTS)
-endif
-
-
-run: build  $(UPROGS)
-ifeq ($(platform), k210)
-	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
-	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
-	@dd if=$(image) of=$(k210) bs=128k seek=1
-	@$(OBJDUMP) -D -b binary -m riscv $(k210) > $T/k210.asm
-	@for file in $$( ls $U/_* ); do \
-		dd if=$$file of=disk.img conv=notrunc; done
-	@sudo chmod 777 $(k210-serialport)
-	@python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
-else
-	@$(QEMU) $(QEMUOPTS)
-endif
-
 # Compile Kernel
 $T/kernel: $(OBJS) $(linker) $U/initcode
 	@if [ ! -d "./target" ]; then mkdir target; fi
-	@$(LD) $(LDFLAGS) -T $(linker) -o $T/kernel $(OBJS)
-	@$(OBJDUMP) -S $T/kernel > $T/kernel.asm
-	@$(OBJDUMP) -t $T/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $T/kernel.sym
-  
+
 build: $T/kernel userprogs
 
 # Compile RustSBI
@@ -147,7 +119,7 @@ rustsbi-clean:
 	@cd ./bootloader/SBI/rustsbi-qemu && cargo clean
 
 image = $T/kernel.bin
-k210 = ./k210.bin
+k210 = $T/k210.bin
 k210-serialport := /dev/ttyUSB0
 
 ifndef CPUS
@@ -156,22 +128,29 @@ endif
 
 QEMUOPTS = -machine virt -kernel $T/kernel -m 8M -nographic
 
-# use multi-core 
+# use multi-core
 QEMUOPTS += -smp $(CPUS)
 
 QEMUOPTS += -bios $(RUSTSBI)
 
 # import virtual disk image
-QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0 
+QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
-QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
-	then echo "-gdb tcp::25000"; \
-	else echo "-s -p 25000"; fi)
 
-qemu-gdb: build
-	@echo "*** now run gdb in another window"
-	@$(QEMU) -nographic $(QEMUOPTS) -S $(QEMUGDB)
-
+all: build
+ifeq ($(platform), k210)
+	@$(LD) $(LDFLAGS) -T $(linker) -o $T/kernel $(OBJS)
+	@$(OBJDUMP) -S $T/kernel > $T/kernel.asm
+	@$(OBJDUMP) -t $T/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $T/kernel.sym
+	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
+	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
+	@dd if=$(image) of=$(k210) bs=128k seek=1
+#	@sudo chmod 777 $(k210-serialport)
+#	@python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
+	cp $(k210) ./k210.bin
+else
+	@$(QEMU) $(QEMUOPTS)
+endif
 
 $U/initcode: $U/initcode.S
 	$(CC) $(CFLAGS) -march=rv64g -nostdinc -I. -Ikernel -c $U/initcode.S -o $U/initcode.o
@@ -225,20 +204,15 @@ UPROGS=\
 	$U/_usertests\
 	$U/_strace\
 	$U/_mv\
-	$U/_test_clone\
-	$U/_test_exit\
-	$U/_test_fork\
-	$U/_test_getpid\
-	$U/_test_wait\
-	$U/_test_getppid\
-	$U/_test_execve\
-	$U/_forktest\
+
+	# $U/_forktest\
 	# $U/_ln\
 	# $U/_stressfs\
 	# $U/_grind\
 	# $U/_zombie\
 
 userprogs: $(UPROGS)
+	@$(OBJDUMP) -S $U/_init > $U/init.asm
 
 dst=/mnt
 
@@ -257,24 +231,22 @@ fs: $(UPROGS)
 		sudo cp $$file $(dst)/$${file#$U/_};\
 		sudo cp $$file $(dst)/bin/$${file#$U/_}; done
 	@sudo umount $(dst)
-	
 
+# Write mounted sdcard
+sdcard: userprogs
+	@if [ ! -d "$(dst)/bin" ]; then sudo mkdir $(dst)/bin; fi
+	@for file in $$( ls $U/_* ); do \
+		sudo cp $$file $(dst)/bin/$${file#$U/_}; done
+	@sudo cp $U/_init $(dst)/init
+	@sudo cp $U/_sh $(dst)/sh
+	@sudo cp README $(dst)/README
 
-# Write sdcard
-sdcard: fs
-	@if [ "$(sd)" != "" ]; then \
-		echo "flashing into sd card..."; \
-		sudo dd if=fs.img of=$(sd); \
-	else \
-		echo "sd card not detected!"; fi
-
-clean: 
+clean:
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*/*.o */*.d */*.asm */*.sym \
 	$T/* \
 	$U/initcode $U/initcode.out \
 	$K/kernel \
-	./k210.bin \
 	.gdbinit \
 	$U/usys.S \
 	$(UPROGS)

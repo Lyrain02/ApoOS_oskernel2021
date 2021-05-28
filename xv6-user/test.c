@@ -2,7 +2,7 @@
 #include "kernel/include/stat.h"
 #include "kernel/include/sysinfo.h"
 #include "xv6-user/user.h"
-/*
+
 int main()
 {
     struct sysinfo info;
@@ -13,10 +13,4 @@ int main()
         printf("process amount: %d\n", info.nproc);
     }
     exit(0);
-}
-*/
-int main()
-{
-    printf("...\n");
-    return 0;
 }

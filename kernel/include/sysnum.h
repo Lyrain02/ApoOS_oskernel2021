@@ -28,8 +28,5 @@
 #define SYS_readdir     24
 #define SYS_getcwd      25
 #define SYS_rename      26
-#define SYS_clone       27//ljn
-#define SYS_getppid     28
-#define SYS_execve      29
 
 #endif

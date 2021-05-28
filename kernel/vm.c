@@ -8,8 +8,6 @@
 #include "include/proc.h"
 #include "include/printf.h"
 #include "include/string.h"
-#include "include/fcntl.h"
-#include "include/buf.h"
 
 /*
  * the kernel's page table.

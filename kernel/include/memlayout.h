@@ -98,7 +98,6 @@
 // from physical address 0x80200000 to PHYSTOP.
 #ifndef QEMU
 #define KERNBASE                0x80020000
-#define KERN_INIT               0x80019000   //目前将init.c放到这里
 #else
 #define KERNBASE                0x80200000
 #endif
