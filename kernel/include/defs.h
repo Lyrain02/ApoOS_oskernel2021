@@ -90,6 +90,7 @@ int             dirnext(struct file *f, uint64 addr);
 void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
+uint64          freemem_amount(void);
 
 // log.c
 // void            initlog(int, struct superblock*);
@@ -143,6 +144,8 @@ void            acquire(struct spinlock*);
 int             holding(struct spinlock*);
 void            initlock(struct spinlock*, char*);
 void            release(struct spinlock*);
+
+// intr.c
 void            push_off(void);
 void            pop_off(void);
 

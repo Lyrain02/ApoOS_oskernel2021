@@ -1,4 +1,4 @@
-// Copyright 2020 Luo Jia
+// https://github.com/luojia65/rustsbi/blob/master/platform/qemu/src/hal/ns16550a.rs
 use core::convert::Infallible;
 use core::ptr::{read_volatile, write_volatile};
 use embedded_hal::serial::{Read, Write};
@@ -24,10 +24,8 @@ impl Ns16550a {
             write_volatile((base + (offsets::LCR << shift)) as *mut u8, 3); // WLEN8 & !DLAB
 
             write_volatile((base + (offsets::MCR << shift)) as *mut u8, 0);
-            write_volatile((base + (offsets::IER << shift)) as *mut u8, 0);
+            write_volatile((base + (offsets::IER << shift)) as *mut u8, 1);		// enable Rx interrupt 
             write_volatile((base + (offsets::FCR << shift)) as *mut u8, 0x7); // FIFO enable + FIFO reset
-
-            // No interrupt for now
         }
         // init finished
         Self { base, shift }

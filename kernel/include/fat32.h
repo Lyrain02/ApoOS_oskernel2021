@@ -2,6 +2,7 @@
 #define __FAT32_H
 
 #include "sleeplock.h"
+#include "stat.h"
 
 #define ATTR_READ_ONLY      0x01
 #define ATTR_HIDDEN         0x02
@@ -16,6 +17,7 @@
 #define EMPTY_ENTRY         0xe5
 #define END_OF_ENTRY        0x00
 #define CHAR_LONG_NAME      13
+#define CHAR_SHORT_NAME     11
 
 #define FAT32_MAX_FILENAME  255
 #define FAT32_MAX_PATH      260
@@ -39,7 +41,7 @@ struct dirent {
     /* for OS */
     uint8   dev;
     uint8   dirty;
-    uint8   valid;
+    short   valid;
     int     ref;
     uint32  off;            // offset in the parent dir entry, for writing convenience
     struct dirent *parent;  // because FAT32 doesn't have such thing like inum, use this for cache trick
@@ -47,5 +49,24 @@ struct dirent {
     struct dirent *prev;
     struct sleeplock    lock;
 };
+
+int             fat32_init(void);
+struct dirent*  dirlookup(struct dirent *entry, char *filename, uint *poff);
+char*           formatname(char *name);
+void            emake(struct dirent *dp, struct dirent *ep, uint off);
+struct dirent*  ealloc(struct dirent *dp, char *name, int attr);
+struct dirent*  edup(struct dirent *entry);
+void            eupdate(struct dirent *entry);
+void            etrunc(struct dirent *entry);
+void            eremove(struct dirent *entry);
+void            eput(struct dirent *entry);
+void            estat(struct dirent *ep, struct stat *st);
+void            elock(struct dirent *entry);
+void            eunlock(struct dirent *entry);
+int             enext(struct dirent *dp, struct dirent *ep, uint off, int *count);
+struct dirent*  ename(char *path);
+struct dirent*  enameparent(char *path, char *name);
+int             eread(struct dirent *entry, int user_dst, uint64 dst, uint off, uint n);
+int             ewrite(struct dirent *entry, int user_src, uint64 src, uint off, uint n);
 
 #endif

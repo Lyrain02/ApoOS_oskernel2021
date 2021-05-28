@@ -9,12 +9,12 @@
 #include "include/riscv.h"
 #include "include/spinlock.h"
 #include "include/proc.h"
-#include "include/defs.h"
+#include "include/intr.h"
 
 // the UART control registers are memory-mapped
 // at address UART0. this macro returns the
 // address of one of the registers.
-#define Reg(reg) ((volatile unsigned char *)(UART0 + reg))
+#define Reg(reg) ((volatile unsigned char *)(UART + reg))
 
 // the UART control registers.
 // some have different meanings for
@@ -74,6 +74,8 @@ uartinit(void)
 
   // enable transmit and receive interrupts.
   WriteReg(IER, IER_TX_ENABLE | IER_RX_ENABLE);
+
+    uart_tx_w = uart_tx_r = 0;
 
   initlock(&uart_tx_lock, "uart");
 }

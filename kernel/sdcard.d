@@ -1,7 +1,6 @@
-kernel/sdcard.o: kernel/sdcard.c kernel/include/types.h \
- kernel/include/sdcard.h kernel/include/spi.h kernel/include/riscv.h \
- kernel/include/gpiohs.h kernel/include/gpio_common.h \
- kernel/include/platform.h kernel/include/plic.h \
- /root/Desktop/riscv/riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubuntu14/lib/gcc/riscv64-unknown-elf/8.3.0/include/stdint.h \
- /root/Desktop/riscv/riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubuntu14/lib/gcc/riscv64-unknown-elf/8.3.0/include/stdint-gcc.h \
- kernel/include/encoding.h kernel/include/defs.h
+kernel/sdcard.o: kernel/sdcard.c kernel/include/printf.h \
+ kernel/include/types.h kernel/include/riscv.h kernel/include/gpiohs.h \
+ kernel/include/buf.h kernel/include/sleeplock.h kernel/include/types.h \
+ kernel/include/spinlock.h kernel/include/spinlock.h \
+ kernel/include/dmac.h kernel/include/plic.h kernel/include/memlayout.h \
+ kernel/include/spi.h kernel/include/sdcard.h

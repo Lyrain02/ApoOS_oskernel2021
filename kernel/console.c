@@ -15,11 +15,9 @@
 #include "include/param.h"
 #include "include/spinlock.h"
 #include "include/sleeplock.h"
-// #include "include/fs.h"
 #include "include/file.h"
 #include "include/memlayout.h"
 #include "include/riscv.h"
-#include "include/defs.h"
 #include "include/proc.h"
 #include "include/sbi.h"
 
@@ -27,16 +25,14 @@
 #define C(x)  ((x)-'@')  // Control-x
 
 void consputc(int c) {
-  #ifndef QEMU
+  if(c == BACKSPACE){
+    // if the user typed backspace, overwrite with a space.
+    sbi_console_putchar('\b');
+    sbi_console_putchar(' ');
+    sbi_console_putchar('\b');
+  } else {
     sbi_console_putchar(c);
-  #else
-    if(c == BACKSPACE){
-      // if the user typed backspace, overwrite with a space.
-      uartputc_sync('\b'); uartputc_sync(' '); uartputc_sync('\b');
-    } else {
-      uartputc_sync(c);
-    }
-  #endif
+  }
 }
 struct {
   struct spinlock lock;
@@ -62,7 +58,7 @@ consolewrite(int user_src, uint64 src, int n)
     char c;
     if(either_copyin(&c, user_src, src+i, 1) == -1)
       break;
-    uartputc(c);
+    sbi_console_putchar(c);
   }
   release(&cons.lock);
 
@@ -156,8 +152,11 @@ consoleintr(int c)
     break;
   default:
     if(c != 0 && cons.e-cons.r < INPUT_BUF){
+      #ifndef QEMU
+      if (c == '\r') break;     // on k210, "enter" will input \n and \r
+      #else
       c = (c == '\r') ? '\n' : c;
-
+      #endif
       // echo back to the user.
       consputc(c);
 
@@ -182,8 +181,8 @@ consoleinit(void)
 {
   initlock(&cons.lock, "cons");
 
-  uartinit();
-
+  cons.e = cons.w = cons.r = 0;
+  
   // connect read and write system calls
   // to consoleread and consolewrite.
   devsw[CONSOLE].read = consoleread;
