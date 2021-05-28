@@ -150,10 +150,13 @@ static uint64 (*syscalls[])(void) = {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   [SYS_clone]       sys_clone,
   [SYS_getppid]     sys_getppid,
   [SYS_execve]      sys_execve,
 =======
+=======
+>>>>>>> parent of cef286d (Revert "update")
 =======
 >>>>>>> parent of cef286d (Revert "update")
 =======
@@ -177,6 +180,9 @@ static uint64 (*syscalls[])(void) = {
 //  [101] sys_sleep
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of cef286d (Revert "update")
+=======
 >>>>>>> parent of cef286d (Revert "update")
 =======
 >>>>>>> parent of cef286d (Revert "update")
