@@ -1,3 +1,4 @@
+
 #include "include/types.h"
 #include "include/param.h"
 #include "include/memlayout.h"
@@ -5,29 +6,25 @@
 #include "include/spinlock.h"
 #include "include/proc.h"
 #include "include/sbi.h"
-#include "include/plic.h"
-#include "include/trap.h"
-#include "include/syscall.h"
-#include "include/printf.h"
-#include "include/console.h"
-#include "include/timer.h"
-#include "include/disk.h"
+#include "include/defs.h"
+
+
+struct spinlock tickslock;
+uint ticks;
 
 extern char trampoline[], uservec[], userret[];
 
 // in kernelvec.S, calls kerneltrap().
-extern void kernelvec();
+void kernelvec();
 
-int devintr();
+extern int devintr();
 
-// void
-// trapinit(void)
-// {
-//   initlock(&tickslock, "time");
-//   #ifdef DEBUG
-//   printf("trapinit\n");
-//   #endif
-// }
+void
+trapinit(void)
+{
+  initlock(&tickslock, "time");
+  printf("trapinit\n");
+}
 
 // set up to take exceptions and traps while in the kernel.
 void
@@ -35,12 +32,8 @@ trapinithart(void)
 {
   w_stvec((uint64)kernelvec);
   w_sstatus(r_sstatus() | SSTATUS_SIE);
-  // enable supervisor-mode timer interrupts.
-  w_sie(r_sie() | SIE_SEIE | SIE_SSIE | SIE_STIE);
-  set_next_timeout();
-  #ifdef DEBUG
+  w_sie(r_sie() | SIE_SEIE | SIE_SSIE);
   printf("trapinithart\n");
-  #endif
 }
 
 //
@@ -67,23 +60,24 @@ usertrap(void)
   
   if(r_scause() == 8){
     // system call
+
     if(p->killed)
       exit(-1);
+
     // sepc points to the ecall instruction,
     // but we want to return to the next instruction.
     p->trapframe->epc += 4;
+
     // an interrupt will change sstatus &c registers,
     // so don't enable until done with those registers.
     intr_on();
+
     syscall();
-  } 
-  else if((which_dev = devintr()) != 0){
+  } else if((which_dev = devintr()) != 0){
     // ok
-  } 
-  else {
-    printf("\nusertrap(): unexpected scause %p pid=%d %s\n", r_scause(), p->pid, p->name);
+  } else {
+    printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
-    // trapframedump(p->trapframe);
     p->killed = 1;
   }
 
@@ -146,7 +140,9 @@ usertrapret(void)
 // interrupts and exceptions from kernel code go here via kernelvec,
 // on whatever the current kernel stack is.
 void 
-kerneltrap() {
+kerneltrap()
+{
+  // printf("run in kerneltrap...\n");
   int which_dev = 0;
   uint64 sepc = r_sepc();
   uint64 sstatus = r_sstatus();
@@ -158,19 +154,18 @@ kerneltrap() {
     panic("kerneltrap: interrupts enabled");
 
   if((which_dev = devintr()) == 0){
-    printf("\nscause %p\n", scause);
-    printf("sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
-    struct proc *p = myproc();
-    if (p != 0) {
-      printf("pid: %d, name: %s\n", p->pid, p->name);
-    }
+    printf("scause %p\n", scause);
+    printf("sepc=%p stval=%p\n", r_sepc(), r_stval());
     panic("kerneltrap");
   }
   // printf("which_dev: %d\n", which_dev);
   
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING) {
-    yield();
+  if(which_dev == 2) {
+    timer_tick();
+    if(myproc() != 0 && myproc()->state == RUNNING) {
+      yield();
+    }
   }
   // the yield() may have caused some traps to occur,
   // so restore trap registers for use by kernelvec.S's sepc instruction.
@@ -178,87 +173,108 @@ kerneltrap() {
   w_sstatus(sstatus);
 }
 
-// Check if it's an external/software interrupt, 
-// and handle it. 
-// returns  2 if timer interrupt, 
-//          1 if other device, 
-//          0 if not recognized. 
-int devintr(void) {
-	uint64 scause = r_scause();
-
-	#ifdef QEMU 
-	// handle external interrupt 
-	if ((0x8000000000000000L & scause) && 9 == (scause & 0xff)) 
-	#else 
-	// on k210, supervisor software interrupt is used 
-	// in alternative to supervisor external interrupt, 
-	// which is not available on k210. 
-	if (0x8000000000000001L == scause && 9 == r_stval()) 
-	#endif 
-	{
-		int irq = plic_claim();
-		if (UART_IRQ == irq) {
-			// keyboard input 
-			int c = sbi_console_getchar();
-			if (-1 != c) {
-				consoleintr(c);
-			}
-		}
-		else if (DISK_IRQ == irq) {
-			disk_intr();
-		}
-		else if (irq) {
-			printf("unexpected interrupt irq = %d\n", irq);
-		}
-
-		if (irq) { plic_complete(irq);}
-
-		#ifndef QEMU 
-		w_sip(r_sip() & ~2);    // clear pending bit
-		sbi_set_mie();
-		#endif 
-
-		return 1;
-	}
-	else if (0x8000000000000005L == scause) {
-		timer_tick();
-		return 2;
-	}
-	else { return 0;}
+void
+clockintr()
+{
+  acquire(&tickslock);
+  ticks++;
+  wakeup(&ticks);
+  release(&tickslock);
 }
 
-void trapframedump(struct trapframe *tf)
+// check if it's an external interrupt or software interrupt,
+// and handle it.
+// returns 2 if timer interrupt,
+// 1 if other device,
+// 0 if not recognized.
+int
+devintr()
 {
-  printf("a0: %p\t", tf->a0);
-  printf("a1: %p\t", tf->a1);
-  printf("a2: %p\t", tf->a2);
-  printf("a3: %p\n", tf->a3);
-  printf("a4: %p\t", tf->a4);
-  printf("a5: %p\t", tf->a5);
-  printf("a6: %p\t", tf->a6);
-  printf("a7: %p\n", tf->a7);
-  printf("t0: %p\t", tf->t0);
-  printf("t1: %p\t", tf->t1);
-  printf("t2: %p\t", tf->t2);
-  printf("t3: %p\n", tf->t3);
-  printf("t4: %p\t", tf->t4);
-  printf("t5: %p\t", tf->t5);
-  printf("t6: %p\t", tf->t6);
-  printf("s0: %p\n", tf->s0);
-  printf("s1: %p\t", tf->s1);
-  printf("s2: %p\t", tf->s2);
-  printf("s3: %p\t", tf->s3);
-  printf("s4: %p\n", tf->s4);
-  printf("s5: %p\t", tf->s5);
-  printf("s6: %p\t", tf->s6);
-  printf("s7: %p\t", tf->s7);
-  printf("s8: %p\n", tf->s8);
-  printf("s9: %p\t", tf->s9);
-  printf("s10: %p\t", tf->s10);
-  printf("s11: %p\t", tf->s11);
-  printf("ra: %p\n", tf->ra);
-  printf("sp: %p\t", tf->sp);
-  printf("gp: %p\t", tf->gp);
-  printf("tp: %p\t", tf->tp);
-  printf("epc: %p\n", tf->epc);
+  uint64 scause = r_scause();
+
+  if((scause & 0x8000000000000000L) &&
+     (scause & 0xff) == 9){
+    // this is a supervisor external interrupt, via PLIC.
+
+    // irq indicates which device interrupted.
+    #ifdef QEMU
+    int irq = plic_claim();
+    if(irq == UART0_IRQ){
+      uartintr();
+    } else if(irq == VIRTIO0_IRQ){
+      disk_intr();
+    } else if(irq){
+      printf("unexpected interrupt irq=%d\n", irq);
+    }
+    // the PLIC allows each device to raise at most one
+    // interrupt at a time; tell the PLIC the device is
+    // now allowed to interrupt again.
+    if(irq)
+      plic_complete(irq);
+    #endif
+
+    return 1;
+  } 
+  else if(scause == 0x8000000000000005L)
+  {
+    // software interrupt from a supervisor-mode timer interrupt,
+
+    if(cpuid() == 0){
+      // clockintr();
+    }
+    
+    // acknowledge the software interrupt by clearing
+    // the SSIP bit in sip.
+    w_sip(r_sip() & ~2);
+
+    return 2;
+  }
+  else {
+    return 0;
+  }
+}
+
+#ifndef QEMU
+void
+supervisor_external_handler() {
+  int irq = *(uint32*)(PLIC + 0x04);
+  if(irq == UARTHS_IRQ) {
+    // UARTHS
+  }
+  else
+  {
+    while (1);
+  }
+}
+#endif
+
+void device_init(unsigned long pa, uint64 hartid) {
+  #ifndef QEMU
+  // after RustSBI, txen = rxen = 1, rxie = 1, rxcnt = 0
+  // start UART interrupt configuration
+  // disable external interrupt on hart1 by setting threshold
+  uint32 *hart0_m_threshold = (uint32*)PLIC;
+  uint32 *hart1_m_threshold = (uint32*)PLIC_MENABLE(hartid);
+  *(hart0_m_threshold) = 0;
+  *(hart1_m_threshold) = 1;
+  // *(uint32*)0x0c200000 = 0;
+  // *(uint32*)0x0c202000 = 1;
+
+  // now using UARTHS whose IRQID = 33
+  // assure that its priority equals 1
+  // if(*(uint32*)(0x0c000000 + 33 * 4) != 1) panic("uarhs's priority is not 1\n");
+  // printf("uart priority: %p\n", *(uint32*)(0x0c000000 + 33 * 4));
+  // *(uint32*)(0x0c000000 + 33 * 4) = 0x1;
+  uint32 *hart0_m_int_enable_hi = (uint32*)(PLIC_MENABLE(hartid) + 0x04);
+  *(hart0_m_int_enable_hi) = (1 << 0x1);
+  // *(uint32*)0x0c002004 = (1 << 0x1);
+  // sbi_set_extern_interrupt((uint64)supervisor_external_handler);
+  #else
+  *((uint32*)0x0c002080) = (1 << 10);
+  *((uint8*)0x10000004) = 0x0b;
+  *((uint8*)0x10000001) = 0x01;
+  *((uint32*)0x0c000028) = 0x7;
+  *((uint32*)0x0c201000) = 0x0;
+  #endif
+  printf("device init\n");
 }

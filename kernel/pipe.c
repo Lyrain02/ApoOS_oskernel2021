@@ -1,14 +1,24 @@
 
 #include "include/types.h"
 #include "include/riscv.h"
+#include "include/defs.h"
 #include "include/param.h"
 #include "include/spinlock.h"
 #include "include/proc.h"
+// #include "include/fs.h"
 #include "include/sleeplock.h"
 #include "include/file.h"
-#include "include/pipe.h"
-#include "include/kalloc.h"
-#include "include/vm.h"
+
+#define PIPESIZE 512
+
+struct pipe {
+  struct spinlock lock;
+  char data[PIPESIZE];
+  uint nread;     // number of bytes read
+  uint nwrite;    // number of bytes written
+  int readopen;   // read fd is still open
+  int writeopen;  // write fd is still open
+};
 
 int
 pipealloc(struct file **f0, struct file **f1)
@@ -17,9 +27,9 @@ pipealloc(struct file **f0, struct file **f1)
 
   pi = 0;
   *f0 = *f1 = 0;
-  if((*f0 = filealloc()) == NULL || (*f1 = filealloc()) == NULL)
+  if((*f0 = filealloc()) == 0 || (*f1 = filealloc()) == 0)
     goto bad;
-  if((pi = (struct pipe*)kalloc()) == NULL)
+  if((pi = (struct pipe*)kalloc()) == 0)
     goto bad;
   pi->readopen = 1;
   pi->writeopen = 1;
@@ -81,8 +91,7 @@ pipewrite(struct pipe *pi, uint64 addr, int n)
       wakeup(&pi->nread);
       sleep(&pi->nwrite, &pi->lock);
     }
-    // if(copyin(pr->pagetable, &ch, addr + i, 1) == -1)
-    if(copyin2(&ch, addr + i, 1) == -1)
+    if(copyin(pr->pagetable, &ch, addr + i, 1) == -1)
       break;
     pi->data[pi->nwrite++ % PIPESIZE] = ch;
   }
@@ -110,8 +119,7 @@ piperead(struct pipe *pi, uint64 addr, int n)
     if(pi->nread == pi->nwrite)
       break;
     ch = pi->data[pi->nread++ % PIPESIZE];
-    // if(copyout(pr->pagetable, addr + i, &ch, 1) == -1)
-    if(copyout2(addr + i, &ch, 1) == -1)
+    if(copyout(pr->pagetable, addr + i, &ch, 1) == -1)
       break;
   }
   wakeup(&pi->nwrite);  //DOC: piperead-wakeup

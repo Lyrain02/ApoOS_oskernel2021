@@ -5,17 +5,14 @@
 
 #include "include/types.h"
 #include "include/riscv.h"
+#include "include/defs.h"
 #include "include/param.h"
 #include "include/spinlock.h"
 #include "include/sleeplock.h"
 #include "include/fat32.h"
 #include "include/file.h"
-#include "include/pipe.h"
 #include "include/stat.h"
 #include "include/proc.h"
-#include "include/printf.h"
-#include "include/string.h"
-#include "include/vm.h"
 
 struct devsw devsw[NDEV];
 struct {
@@ -27,13 +24,7 @@ void
 fileinit(void)
 {
   initlock(&ftable.lock, "ftable");
-  struct file *f;
-  for(f = ftable.file; f < ftable.file + NFILE; f++){
-    memset(f, 0, sizeof(struct file));
-  }
-  #ifdef DEBUG
   printf("fileinit\n");
-  #endif
 }
 
 // Allocate a file structure.
@@ -51,7 +42,7 @@ filealloc(void)
     }
   }
   release(&ftable.lock);
-  return NULL;
+  return 0;
 }
 
 // Increment ref count for file f.
@@ -98,15 +89,14 @@ fileclose(struct file *f)
 int
 filestat(struct file *f, uint64 addr)
 {
-  // struct proc *p = myproc();
+  struct proc *p = myproc();
   struct stat st;
   
   if(f->type == FD_ENTRY){
     elock(f->ep);
     estat(f->ep, &st);
     eunlock(f->ep);
-    // if(copyout(p->pagetable, addr, (char *)&st, sizeof(st)) < 0)
-    if(copyout2(addr, (char *)&st, sizeof(st)) < 0)
+    if(copyout(p->pagetable, addr, (char *)&st, sizeof(st)) < 0)
       return -1;
     return 0;
   }
@@ -182,7 +172,7 @@ filewrite(struct file *f, uint64 addr, int n)
 int
 dirnext(struct file *f, uint64 addr)
 {
-  // struct proc *p = myproc();
+  struct proc *p = myproc();
 
   if(f->readable == 0 || !(f->ep->attribute & ATTR_DIRECTORY))
     return -1;
@@ -201,8 +191,7 @@ dirnext(struct file *f, uint64 addr)
 
   f->off += count * 32;
   estat(&de, &st);
-  // if(copyout(p->pagetable, addr, (char *)&st, sizeof(st)) < 0)
-  if(copyout2(addr, (char *)&st, sizeof(st)) < 0)
+  if(copyout(p->pagetable, addr, (char *)&st, sizeof(st)) < 0)
     return -1;
 
   return 1;

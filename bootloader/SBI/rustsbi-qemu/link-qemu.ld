@@ -1,4 +1,3 @@
-/* Ref: https://github.com/luojia65/rustsbi/blob/master/platform/qemu/link-qemu.ld */
 MEMORY {
     /* 存储单元的物理地址 */
     SRAM : ORIGIN = 0x80000000, LENGTH = 2M

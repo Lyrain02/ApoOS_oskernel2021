@@ -1,3 +1,4 @@
+// Copyright 2020 Luo Jia
 use std::env;
 use std::fs;
 use std::io::Write;

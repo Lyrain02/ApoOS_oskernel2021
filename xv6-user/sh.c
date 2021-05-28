@@ -11,16 +11,7 @@
 #define LIST  4
 #define BACK  5
 
-#define NENVS 16
 #define MAXARGS 10
-
-struct env{
-  char name[32];
-  char value[96];
-};
-
-struct env envs[NENVS];
-int nenv = 0;
 
 struct cmd {
   int type;
@@ -62,95 +53,12 @@ int fork1(void);  // Fork but panics on failure.
 void panic(char*);
 struct cmd *parsecmd(char*);
 
+#ifndef QEMU
+char platform[] = "k210";
+#else
+char platform[] = "qemu";
+#endif
 char mycwd[128];
-
-int
-checkenvname(char* s)
-{
-  if((*s >= 'A' && *s <= 'Z') ||
-     (*s >= 'a' && *s <= 'z') ||
-      *s == '_')
-    ;
-  else
-    return 0;
-  char *tmp = s + 1;
-  while((*tmp >= 'A' && *tmp <= 'Z') ||
-        (*tmp >= 'a' && *tmp <= 'z') ||
-        (*tmp >= '0' && *tmp <= '9') ||
-         *tmp == '_')
-    tmp++;
-  return (int)(tmp - s);
-}
-
-int
-export(char *argv[])
-{
-  if(!strcmp(argv[1], "-p"))
-  { // print all the env vars
-    if(!nenv)
-    {
-      printf("NO env var exported\n");
-      return 0;
-    }
-    for(int i=0; i<nenv; i++)
-      printf("export %s=%s\n", envs[i].name, envs[i].value);
-    return 0;
-  }
-  else if(nenv == NENVS)
-  {
-    fprintf(2, "too many env vars\n");
-    return -1;
-  }
-  char name[32], value[96];
-  char *s = argv[1], *t = name;
-
-  for(s=argv[1], t=name; (*t=*s++)!='='; t++)
-    ;
-  *t = 0;
-
-  if(checkenvname(name) != ((s - argv[1]) - 1))
-  {
-    fprintf(2, "Invalid NAME!\n");
-    return -1;
-  }
-  for(t=value; (*t=*s); s++, t++)
-    ;
-  if(*--t == '/')
-    *t = 0;
-  
-  strcpy(envs[nenv].name, name);
-  strcpy(envs[nenv].value, value);
-  nenv++;
-  return 0;
-}
-
-int
-replace(char *buf)
-{
-  char raw[100], name[32], *s, *t, *tmp;
-  int n = 0;
-  strcpy(raw, buf);
-  for(s=raw, t=buf; (*t=*s); t++)
-  {
-    if(*s++ == '$'){
-      tmp = name;
-      if((*s >= 'A' && *s <= 'Z') || (*s >= 'a' && *s <= 'z') || *s == '_')
-      {
-        *tmp++ = *s++;
-        while((*s >= 'A' && *s <= 'Z') || (*s >= 'a' && *s <= 'z') || (*s >= '0' && *s <= '9') || *s == '_')
-          *tmp++ = *s++;
-        *tmp = 0;
-        for(int i=0; i<nenv; i++)
-          if(!strcmp(name, envs[i].name))
-            for(tmp=envs[i].value; (*t=*tmp); t++, tmp++)
-              ;
-        t--;
-      }
-      n++;
-    }
-  }
-  return n;
-}
 
 // Execute cmd.  Never returns.
 void
@@ -174,24 +82,7 @@ runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit(1);
-    
     exec(ecmd->argv[0], ecmd->argv);
-
-    int i;
-    char env_cmd[64];
-    for(i=0; i<nenv; i++)
-    {
-      char *s_tmp = env_cmd;
-      char *d_tmp = envs[i].value;
-      while((*s_tmp = *d_tmp++))
-        s_tmp++;
-      *s_tmp++ = '/';
-      d_tmp = ecmd->argv[0];
-      while((*s_tmp++ = *d_tmp++))
-        ;
-
-      exec(env_cmd, ecmd->argv);
-    }
     fprintf(2, "exec %s failed\n", ecmd->argv[0]);
     break;
 
@@ -249,7 +140,7 @@ runcmd(struct cmd *cmd)
 int
 getcmd(char *buf, int nbuf)
 {
-  fprintf(2, "-> %s $ ", mycwd);
+  fprintf(2, "%s@xv6-riscv:%s$ ", platform, mycwd);
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
   if(buf[0] == 0) // EOF
@@ -270,47 +161,20 @@ main(void)
       break;
     }
   }
-
-  // Add an embedded env var(for basic commands in shell)
-  strcpy(envs[nenv].name, "SHELL");
-  strcpy(envs[nenv].value, "/bin");
-  nenv++;
-
   getcwd(mycwd);
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
-    replace(buf);
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n
       if(chdir(buf+3) < 0)
         fprintf(2, "cannot cd %s\n", buf+3);
       getcwd(mycwd);
+      continue;
     }
-    else{
-      struct cmd *cmd = parsecmd(buf);
-      struct execcmd *ecmd;
-
-      ecmd = (struct execcmd*)cmd;
-      if(ecmd->argv[0] == 0) {
-        free(cmd);
-        continue;
-      }
-      else if(!strcmp(ecmd->argv[0], "export"))
-      {
-        // Export must be called by the parent, not the child.
-        if(ecmd->argv[1] == NULL)
-          fprintf(2, "Usage: export [-p] [NAME=VALUE]\n");
-        else if(export(ecmd->argv) < 0)
-          fprintf(2, "export failed\n");
-        free(cmd);
-        continue;
-      }
-      else if(fork1() == 0) 
-        runcmd(cmd);
-      wait(0);
-      free(cmd);
-    }
+    if(fork1() == 0)
+      runcmd(parsecmd(buf));
+    wait(0);
   }
   exit(0);
 }
@@ -533,7 +397,7 @@ parseredirs(struct cmd *cmd, char **ps, char *es)
       cmd = redircmd(cmd, q, eq, O_WRONLY|O_CREATE|O_TRUNC, 1);
       break;
     case '+':  // >>
-      cmd = redircmd(cmd, q, eq, O_WRONLY|O_CREATE|O_APPEND, 1);
+      cmd = redircmd(cmd, q, eq, O_WRONLY|O_CREATE, 1);
       break;
     }
   }

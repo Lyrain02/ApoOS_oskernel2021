@@ -6,12 +6,10 @@
 #include "include/spinlock.h"
 #include "include/sleeplock.h"
 #include "include/proc.h"
+#include "include/defs.h"
 #include "include/elf.h"
+
 #include "include/fat32.h"
-#include "include/kalloc.h"
-#include "include/vm.h"
-#include "include/printf.h"
-#include "include/string.h"
 
 // Load a program segment into pagetable at virtual address va.
 // va must be page-aligned
@@ -27,7 +25,7 @@ loadseg(pagetable_t pagetable, uint64 va, struct dirent *ep, uint offset, uint s
 
   for(i = 0; i < sz; i += PGSIZE){
     pa = walkaddr(pagetable, va + i);
-    if(pa == NULL)
+    if(pa == 0)
       panic("loadseg: address should exist");
     if(sz - i < PGSIZE)
       n = sz - i;
@@ -50,25 +48,10 @@ int exec(char *path, char **argv)
   struct dirent *ep;
   struct proghdr ph;
   pagetable_t pagetable = 0, oldpagetable;
-  pagetable_t kpagetable = 0, oldkpagetable;
   struct proc *p = myproc();
 
-  // Make a copy of p->kpt without old user space, 
-  // but with the same kstack we are using now, which can't be changed
-  if ((kpagetable = (pagetable_t)kalloc()) == NULL) {
+  if((ep = ename(path)) == 0)
     return -1;
-  }
-  memmove(kpagetable, p->kpagetable, PGSIZE);
-  for (int i = 0; i < PX(2, MAXUVA); i++) {
-    kpagetable[i] = 0;
-  }
-
-  if((ep = ename(path)) == NULL) {
-    #ifdef DEBUG
-    printf("[exec] %s not found\n", path);
-    #endif
-    goto bad;
-  }
   elock(ep);
 
   // Check ELF header
@@ -76,7 +59,8 @@ int exec(char *path, char **argv)
     goto bad;
   if(elf.magic != ELF_MAGIC)
     goto bad;
-  if((pagetable = proc_pagetable(p)) == NULL)
+
+  if((pagetable = proc_pagetable(p)) == 0)
     goto bad;
 
   // Load program into memory.
@@ -90,7 +74,7 @@ int exec(char *path, char **argv)
     if(ph.vaddr + ph.memsz < ph.vaddr)
       goto bad;
     uint64 sz1;
-    if((sz1 = uvmalloc(pagetable, kpagetable, sz, ph.vaddr + ph.memsz)) == 0)
+    if((sz1 = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz)) == 0)
       goto bad;
     sz = sz1;
     if(ph.vaddr % PGSIZE != 0)
@@ -109,7 +93,7 @@ int exec(char *path, char **argv)
   // Use the second as the user stack.
   sz = PGROUNDUP(sz);
   uint64 sz1;
-  if((sz1 = uvmalloc(pagetable, kpagetable, sz, sz + 2*PGSIZE)) == 0)
+  if((sz1 = uvmalloc(pagetable, sz, sz + 2*PGSIZE)) == 0)
     goto bad;
   sz = sz1;
   uvmclear(pagetable, sz-2*PGSIZE);
@@ -151,26 +135,17 @@ int exec(char *path, char **argv)
     
   // Commit to the user image.
   oldpagetable = p->pagetable;
-  oldkpagetable = p->kpagetable;
   p->pagetable = pagetable;
-  p->kpagetable = kpagetable;
   p->sz = sz;
   p->trapframe->epc = elf.entry;  // initial program counter = main
   p->trapframe->sp = sp; // initial stack pointer
   proc_freepagetable(oldpagetable, oldsz);
-  w_satp(MAKE_SATP(p->kpagetable));
-  sfence_vma();
-  kvmfree(oldkpagetable, 0);
+
   return argc; // this ends up in a0, the first argument to main(argc, argv)
 
  bad:
-  #ifdef DEBUG
-  printf("[exec] reach bad\n");
-  #endif
   if(pagetable)
     proc_freepagetable(pagetable, sz);
-  if(kpagetable)
-    kvmfree(kpagetable, 0);
   if(ep){
     eunlock(ep);
     eput(ep);

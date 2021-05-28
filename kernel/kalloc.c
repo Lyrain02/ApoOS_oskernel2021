@@ -7,10 +7,8 @@
 #include "include/param.h"
 #include "include/memlayout.h"
 #include "include/riscv.h"
+#include "include/defs.h"
 #include "include/spinlock.h"
-#include "include/kalloc.h"
-#include "include/string.h"
-#include "include/printf.h"
 
 void freerange(void *pa_start, void *pa_end);
 
@@ -23,20 +21,15 @@ struct run {
 struct {
   struct spinlock lock;
   struct run *freelist;
-  uint64 npage;
 } kmem;
 
 void
 kinit()
 {
   initlock(&kmem.lock, "kmem");
-  kmem.freelist = 0;
-  kmem.npage = 0;
+  // printf("kernel_end: %p, phystop: %p\n", kernel_end, (void*)PHYSTOP);
   freerange(kernel_end, (void*)PHYSTOP);
-  #ifdef DEBUG
-  printf("kernel_end: %p, phystop: %p\n", kernel_end, (void*)PHYSTOP);
   printf("kinit\n");
-  #endif
 }
 
 void
@@ -68,7 +61,6 @@ kfree(void *pa)
   acquire(&kmem.lock);
   r->next = kmem.freelist;
   kmem.freelist = r;
-  kmem.npage++;
   release(&kmem.lock);
 }
 
@@ -82,19 +74,11 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r) {
+  if(r)
     kmem.freelist = r->next;
-    kmem.npage--;
-  }
   release(&kmem.lock);
 
   if(r)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
-}
-
-uint64
-freemem_amount(void)
-{
-  return kmem.npage << PGSHIFT;
 }

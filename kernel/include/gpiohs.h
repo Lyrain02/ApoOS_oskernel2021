@@ -15,29 +15,14 @@
 #ifndef _DRIVER_GPIOHS_H
 #define _DRIVER_GPIOHS_H
 
-typedef enum _gpio_drive_mode
-{
-    GPIO_DM_INPUT,
-    GPIO_DM_INPUT_PULL_DOWN,
-    GPIO_DM_INPUT_PULL_UP,
-    GPIO_DM_OUTPUT,
-} gpio_drive_mode_t;
-
-typedef enum _gpio_pin_edge
-{
-    GPIO_PE_NONE,
-    GPIO_PE_FALLING,
-    GPIO_PE_RISING,
-    GPIO_PE_BOTH,
-    GPIO_PE_LOW,
-    GPIO_PE_HIGH = 8,
-} gpio_pin_edge_t;
-
-typedef enum _gpio_pin_value
-{
-    GPIO_PV_LOW,
-    GPIO_PV_HIGH
-} gpio_pin_value_t;
+// #include <stddef.h>
+// #include <stdint.h>
+#include "gpio_common.h"
+#include "platform.h"
+#include "plic.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* clang-format off */
 /* Register address offsets */
@@ -265,7 +250,7 @@ void gpiohs_set_irq(uint8 pin, uint32 priority, void (*func)());
  * @param[in]   callback        Gpiohs pin interrupt service routine
  * @param[in]   ctx             Gpiohs interrupt param
  */
-//void gpiohs_irq_register(uint8 pin, uint32 priority, plic_irq_callback_t callback, void *ctx);
+void gpiohs_irq_register(uint8 pin, uint32 priority, plic_irq_callback_t callback, void *ctx);
 
 /**
  * @brief      Unregister Gpiohs pin interrupt
@@ -274,5 +259,8 @@ void gpiohs_set_irq(uint8 pin, uint32 priority, void (*func)());
  */
 void gpiohs_irq_unregister(uint8 pin);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _DRIVER_GPIOHS_H */

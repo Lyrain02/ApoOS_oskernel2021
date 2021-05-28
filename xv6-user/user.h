@@ -1,50 +1,42 @@
-#include "kernel/include/types.h"
-#include "kernel/include/stat.h"
-#include "kernel/include/fcntl.h"
-
 struct stat;
 struct rtcdate;
-struct sysinfo;
 
 // system calls
 int fork(void);
 int exit(int) __attribute__((noreturn));
 int wait(int*);
 int pipe(int*);
-int write(int fd, const void *buf, int len);
-int read(int fd, void *buf, int len);
-int close(int fd);
-int kill(int pid);
+int write(int, const void*, int);
+int read(int, void*, int);
+int close(int);
+int kill(int);
 int exec(char*, char**);
-int open(const char *filename, int mode);
+int open(const char*, int);
+int mknod(const char*, short, short);
+int unlink(const char*);
 int fstat(int fd, struct stat*);
-int mkdir(const char *dirname);
-int chdir(const char *dirname);
-int dup(int fd);
+int link(const char*, const char*);
+int mkdir(const char*);
+int chdir(const char*);
+int dup(int);
 int getpid(void);
-char* sbrk(int size);
-int sleep(int ticks);
+char* sbrk(int);
+int sleep(int);
 int uptime(void);
-int test_proc(int);
+int test_proc(void);
 int dev(int, short, short);
-int readdir(int fd, struct stat*);
-int getcwd(char *buf);
-int remove(char *filename);
-int trace(int mask);
-int sysinfo(struct sysinfo *);
-int rename(char *old, char *new);
+int dir(int fd, struct stat*);
+int getcwd(char *);
 
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
-char* strcat(char*, const char*);
 void *memmove(void*, const void*, int);
 char* strchr(const char*, char c);
 int strcmp(const char*, const char*);
 void fprintf(int, const char*, ...);
 void printf(const char*, ...);
 char* gets(char*, int max);
-char* fgets(int, char*, int max);
 uint strlen(const char*);
 void* memset(void*, int, uint);
 void* malloc(uint);
