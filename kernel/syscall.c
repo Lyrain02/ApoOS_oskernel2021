@@ -116,9 +116,6 @@ extern uint64 sys_remove(void);
 extern uint64 sys_trace(void);
 extern uint64 sys_sysinfo(void);
 extern uint64 sys_rename(void);
-extern uint64 sys_clone(void);//ljn
-extern uint64 sys_getppid(void);
-extern uint64 sys_execve(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -147,6 +144,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_trace]       sys_trace,
   [SYS_sysinfo]     sys_sysinfo,
   [SYS_rename]      sys_rename,
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -188,6 +186,8 @@ static uint64 (*syscalls[])(void) = {
 >>>>>>> parent of cef286d (Revert "update")
 =======
 >>>>>>> parent of cef286d (Revert "update")
+=======
+>>>>>>> parent of 93a70b3 (vol.3)
 };
 
 static char *sysnames[] = {
@@ -268,32 +268,3 @@ sys_sysinfo(void)
 
   return 0;
 }
-int
- argptr(int n, char **pp, int size)
- {
- int i;
- struct proc *p = myproc();
-
- if(argint(n, &i) < 0)
-  return -1;
- if((uint)i >= p->sz || (uint)i+size > p->sz)
-  return -1;
- *pp = (char*)(uint64)i;
- return 0;
- }
-extern uint64 clone(int(*fcn)(void), void* arg, void* stackad,int   stack_size, unsigned long flags);
-uint64 sys_clone(void){
- char* fnc;
- char* arg;
- char* stack;
- int stack_size=0;
- unsigned long flags=0;
- argptr(0,&fnc,0);
- argptr(1,&arg,0);
- argptr(2,&stack,0);
- argint(3,&stack_size);
- argint(4,(int*)&flags);
-
-
- return clone((int (*)(void ))fnc,(void*)arg,(void*)stack,(int)stack_size, (unsigned long) flags);
- }
