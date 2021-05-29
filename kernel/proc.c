@@ -642,7 +642,7 @@ wait4(int pid, uint64 addr,int options)
     return -1;
   
   struct proc *np;
-  int havekids,res;
+  int havekids,res_status,res_pid;
   struct proc *p = myproc();
 
   // hold p->lock for the whole time to avoid lost
@@ -667,8 +667,9 @@ wait4(int pid, uint64 addr,int options)
       havekids = 1;
       if(np->state == ZOMBIE){
         // Found one.
-        res = np->xstate;
-        if(addr != 0 && copyout2(addr, (char *)&res, sizeof(res)) < 0) {
+        res_pid = np->pid;
+        res_status = np->xstate;
+        if(addr != 0 && copyout2(addr, (char *)&res_status, sizeof(res_status)) < 0) {
           release(&np->lock);
           release(&p->lock);
           return -1;
@@ -676,7 +677,7 @@ wait4(int pid, uint64 addr,int options)
         freeproc(np);
         release(&np->lock);
         release(&p->lock);
-        return np->pid;
+        return res_pid;
       }
       release(&np->lock);
     }
