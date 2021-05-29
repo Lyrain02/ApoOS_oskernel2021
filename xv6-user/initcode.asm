@@ -12,10 +12,10 @@ Disassembly of section .text:
 start:
         la a0, init
    0:	00000517          	auipc	a0,0x0
-   4:	00053503          	ld	a0,0(a0) # 0 <start>
+   4:	00050513          	mv	a0,a0
         la a1, argv
    8:	00000597          	auipc	a1,0x0
-   c:	0005b583          	ld	a1,0(a1) # 8 <start+0x8>
+   c:	00058593          	mv	a1,a1
         li a7, SYS_exec
   10:	00700893          	li	a7,7
         ecall
@@ -26,7 +26,7 @@ start:
 # for(;;) exit();
 exit:
         li a7, SYS_exit
-  18:	00200893          	li	a7,2
+  18:	05d00893          	li	a7,93
         ecall
   1c:	00000073          	ecall
         jal exit

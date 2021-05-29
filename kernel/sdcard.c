@@ -9,6 +9,9 @@
 #include "include/spi.h"
 #include "include/sdcard.h"
 
+#undef SPI_CHIP_SELECT_3 
+#define SPI_CHIP_SELECT_3 0
+
 void SD_CS_HIGH(void) {
     gpiohs_set_pin(7, GPIO_PV_HIGH);
 }

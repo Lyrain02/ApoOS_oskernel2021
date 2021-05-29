@@ -32,10 +32,10 @@ void
 main(unsigned long hartid, unsigned long dtb_pa)
 {
   inithartid(hartid);
-
+  
   if (hartid == 0) {
     consoleinit();
-    printfinit();   // init a lock for printf
+    printfinit();   // init a lock for printf 
     print_logo();
     #ifdef DEBUG
     printf("hart %d enter main()...\n", hartid);
@@ -50,14 +50,18 @@ main(unsigned long hartid, unsigned long dtb_pa)
     plicinithart();
     #ifndef QEMU
     fpioa_pin_init();
+    fpioa_set_function(27, FUNC_SPI0_SCLK); 
+    fpioa_set_function(28, FUNC_SPI0_D0); 
+    fpioa_set_function(26, FUNC_SPI0_D1); 
+    fpioa_set_function(29, FUNC_SPI0_SS0); 
     dmac_init();
-    #endif
+    #endif 
     disk_init();
     binit();         // buffer cache
     fileinit();      // file table
     userinit();      // first user process
     printf("hart 0 init done\n");
-
+    
     for(int i = 1; i < NCPU; i++) {
       unsigned long mask = 1 << i;
       sbi_send_ipi(&mask);

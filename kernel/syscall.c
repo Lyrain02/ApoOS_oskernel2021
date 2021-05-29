@@ -127,38 +127,23 @@ static uint64 (*syscalls[])(void) = {
   [SYS_exec]        sys_exec,
   [SYS_fstat]       sys_fstat,
   [SYS_chdir]       sys_chdir,
-  [23]         sys_dup,
+  [SYS_dup]         sys_dup,
   [SYS_getpid]      sys_getpid,
   [SYS_sbrk]        sys_sbrk,
   [SYS_sleep]       sys_sleep,
-//  [SYS_uptime]      sys_uptime,
+  [SYS_uptime]      sys_uptime,
   [SYS_open]        sys_open,
   [SYS_write]       sys_write,
   [SYS_mkdir]       sys_mkdir,
   [SYS_close]       sys_close,
   [SYS_test_proc]   sys_test_proc,
-  [101]         sys_dev,
-  [100]     sys_readdir,
-  [17]      sys_getcwd,
-  [25]      sys_remove,
+  [SYS_dev]         sys_dev,
+  [SYS_readdir]     sys_readdir,
+  [SYS_getcwd]      sys_getcwd,
+  [SYS_remove]      sys_remove,
   [SYS_trace]       sys_trace,
   [SYS_sysinfo]     sys_sysinfo,
   [SYS_rename]      sys_rename,
-        [64] sys_write,
-        [93] sys_exit,
-        [220] sys_fork,
-        [260] sys_wait,
-        [59] sys_pipe,
-        [49] sys_chdir,
-        [56] sys_open,
-        [57] sys_close,
-        [63] sys_read,
-        [34] sys_mkdir,
-        [80] sys_fstat,
-        [221] sys_exec,
-        [172] sys_getpid,
-        [214] sys_sbrk,
-        [160] sys_sysinfo
 };
 
 static char *sysnames[] = {
@@ -210,7 +195,7 @@ syscall(void)
   }
 }
 
-uint64
+uint64 
 sys_test_proc(void) {
     int n;
     argint(0, &n);
