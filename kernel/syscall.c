@@ -117,6 +117,7 @@ extern uint64 sys_trace(void);
 extern uint64 sys_sysinfo(void);
 extern uint64 sys_rename(void);
 extern uint64 sys_getppid(void);
+extern uint64 sys_wait4(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -149,7 +150,8 @@ static uint64 (*syscalls[])(void) = {
         [221] sys_exec,
         [56] sys_open,
         [214] sys_sbrk,
-  [SYS_getppid]     sys_getppid
+  [SYS_getppid]     sys_getppid,
+  [SYS_wait4]        sys_wait4,
 };
 
 static char *sysnames[] = {
@@ -180,6 +182,7 @@ static char *sysnames[] = {
   [SYS_sysinfo]     "sysinfo",
   [SYS_rename]      "rename",
   [SYS_getppid]     "getppid",
+  [SYS_wait4]        "wait4",
 };
 
 void

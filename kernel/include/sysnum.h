@@ -29,5 +29,6 @@
 #define SYS_readdir     100
 #define SYS_getcwd      17
 #define SYS_rename      26
+#define SYS_wait4       260
 
 #endif

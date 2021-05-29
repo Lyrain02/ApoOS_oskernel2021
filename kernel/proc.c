@@ -629,6 +629,18 @@ exit(int status)
 int
 wait(uint64 addr)
 {
+  return wait4(-1,addr,WCONTINUED);
+}
+
+// Wait for pid process to exit and return its pid.
+// if pid =-1, wait for any child process to return.
+//if options = WNOHANG, and child's status not change, return 0 
+int
+wait4(int pid, uint64 addr,int options)
+{
+  if(pid != -1 && pid <= 0)
+    return -1;
+  
   struct proc *np;
   int havekids, pid;
   struct proc *p = myproc();
@@ -637,33 +649,35 @@ wait(uint64 addr)
   // wakeups from a child's exit().
   acquire(&p->lock);
 
-  for(;;){
+  while(1){
     // Scan through table looking for exited children.
     havekids = 0;
     for(np = proc; np < &proc[NPROC]; np++){
       // this code uses np->parent without holding np->lock.
       // acquiring the lock first would cause a deadlock,
       // since np might be an ancestor, and we already hold p->lock.
-      if(np->parent == p){
-        // np->parent can't change between the check and the acquire()
-        // because only the parent changes it, and we're the parent.
-        acquire(&np->lock);
-        havekids = 1;
-        if(np->state == ZOMBIE){
-          // Found one.
-          pid = np->pid;
-          if(addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
-            release(&np->lock);
-            release(&p->lock);
-            return -1;
-          }
-          freeproc(np);
+      if(np->parent != p)
+        continue;
+      if(pid != -1 && np->pid !=pid)
+        continue;
+    
+      // np->parent can't change between the check and the acquire()
+      // because only the parent changes it, and we're the parent.
+      acquire(&np->lock);
+      havekids = 1;
+      if(np->state == ZOMBIE){
+        // Found one.
+        if(addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
           release(&np->lock);
           release(&p->lock);
-          return pid;
+          return -1;
         }
+        freeproc(np);
         release(&np->lock);
+        release(&p->lock);
+        return np->pid;
       }
+      release(&np->lock);
     }
 
     // No point waiting if we don't have any children.
@@ -672,6 +686,8 @@ wait(uint64 addr)
       return -1;
     }
     
+    if(options & WNOHANG)
+      return 0;
     // Wait for a child to exit.
     sleep(p, &p->lock);  //DOC: wait-sleep
   }

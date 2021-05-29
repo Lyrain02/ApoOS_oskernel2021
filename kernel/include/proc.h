@@ -9,6 +9,10 @@
 #include "fat32.h"
 #include "trap.h"
 
+#define WNOHANG     0x01
+#define WUNTRACED   0x02
+#define WCONTINUED  0x04
+
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;

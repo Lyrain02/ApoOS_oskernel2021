@@ -93,6 +93,19 @@ sys_wait(void)
 }
 
 uint64
+sys_wait4(void)
+{
+  int pid, options;
+  uint64 status;
+  if(argint(0, &pid) < 0 || argaddr(1, &status)<0 || argint(2,&options)<0)
+    return -1;
+   
+  return wait4(pid,status,options);
+}
+
+
+
+uint64
 sys_sbrk(void)
 {
   int addr;
