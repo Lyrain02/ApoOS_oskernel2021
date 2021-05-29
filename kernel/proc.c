@@ -667,7 +667,7 @@ wait4(int pid, uint64 addr,int options)
       havekids = 1;
       if(np->state == ZOMBIE){
         // Found one.
-        res = np->xstate << 8;
+        res = np->xstate;
         if(addr != 0 && copyout2(addr, (char *)&res, sizeof(res)) < 0) {
           release(&np->lock);
           release(&p->lock);
