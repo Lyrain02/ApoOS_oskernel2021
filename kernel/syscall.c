@@ -179,7 +179,7 @@ static char *sysnames[] = {
   [SYS_trace]       "trace",
   [SYS_sysinfo]     "sysinfo",
   [SYS_rename]      "rename",
-  [SYS_getppid]     "sys_getppid",
+  [SYS_getppid]     "getppid",
 };
 
 void

@@ -72,7 +72,7 @@ sys_getpid(void)
 }
 
 uint64
-sys_getpid(void)
+sys_getppid(void)
 {
   return myproc()->parent->pid;
 }
