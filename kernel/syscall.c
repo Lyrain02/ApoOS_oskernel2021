@@ -131,7 +131,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_getpid]      sys_getpid,
   [SYS_sbrk]        sys_sbrk,
   [SYS_sleep]       sys_sleep,
-  [SYS_uptime]      sys_uptime,
+//  [SYS_uptime]      sys_uptime,
   [SYS_open]        sys_open,
   [SYS_write]       sys_write,
   [SYS_mkdir]       sys_mkdir,
