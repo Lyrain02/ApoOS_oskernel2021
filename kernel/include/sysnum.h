@@ -2,13 +2,13 @@
 #define __SYSNUM_H
 
 // System call numbers
-#define SYS_fork         220
+#define SYS_fork         1
 #define SYS_exit         93
 #define SYS_wait         3
 #define SYS_pipe         59
 #define SYS_read         63
 #define SYS_kill         6
-#define SYS_exec         221
+#define SYS_exec         7
 #define SYS_fstat        80
 #define SYS_chdir        49
 #define SYS_dup         23
