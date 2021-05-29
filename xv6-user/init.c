@@ -1,10 +1,10 @@
 // init: The initial user-level program
 
-#include "xv6-user/user.h" 
+#include "xv6-user/user.h"
 
 const int test_c = 31;
 
-char *test_name[] = {"write","getcwd","getpid","brk","chdir","execve","clone","open","pipe","read","close","openat","dup","exit","fork","getdents","getppid","gettimeofday","mkdir_","mmap","mount","munmap","times","umount","uname","unlink","wait","waitpid","yield","fstat","dup2"};
+char *test_name[] = {"openat","write","getcwd","getpid","brk","chdir","execve","clone","open","pipe","read","close","dup","exit","fork","getdents","getppid","gettimeofday","mkdir_","mmap","mount","munmap","times","umount","uname","unlink","wait","waitpid","yield","fstat","dup2"};
 
 void test(char* name) {
   int pid = fork();
