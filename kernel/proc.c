@@ -642,7 +642,7 @@ wait4(int pid, uint64 addr,int options)
     return -1;
   
   struct proc *np;
-  int havekids, pid;
+  int havekids;
   struct proc *p = myproc();
 
   // hold p->lock for the whole time to avoid lost

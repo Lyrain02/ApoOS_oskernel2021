@@ -95,5 +95,6 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 uint64          procnum(void);
 void            test_proc_init(int);
+int             wait4(int pid, uint64 addr,int options);
 
 #endif
