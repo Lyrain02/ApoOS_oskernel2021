@@ -145,7 +145,8 @@ static uint64 (*syscalls[])(void) = {
   [SYS_sysinfo]     sys_sysinfo,
   [SYS_rename]      sys_rename,
         [220] sys_fork,
-        [221] sys_exec
+        [221] sys_exec,
+        [56] sys_open
 };
 
 static char *sysnames[] = {

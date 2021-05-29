@@ -168,7 +168,7 @@ sys_open(void)
   struct file *f;
   struct dirent *ep;
 
-  if(argstr(0, path, FAT32_MAX_PATH) < 0 || argint(1, &omode) < 0)
+  if(argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &omode) < 0)
     return -1;
 
   if(omode & O_CREATE){
