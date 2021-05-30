@@ -4,7 +4,7 @@
 
 const int test_c = 31;
 
-char *test_name[] = {"read","write","getcwd","getpid","getppid","brk","open","pipe","close","fork","openat","dup","exit","chdir","execve","getdents","mkdir_","times","clone","wait","waitpid","yield","fstat","dup2","gettimeofday","mmap","mount","munmap","umount","uname","unlink",};
+char *test_name[] = {"read","write","getcwd","getpid","getppid","brk","open","pipe","close","fork","dup","exit","chdir","execve","openat","getdents","mkdir_","times","clone","wait","waitpid","yield","fstat","dup2","gettimeofday","mmap","mount","munmap","umount","uname","unlink",};
 
 void test(char* name) {
   int pid = fork();
