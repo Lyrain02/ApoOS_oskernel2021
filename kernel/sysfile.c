@@ -76,18 +76,18 @@ uint64
 sys_dup3(void)
 {
   struct file *f1, *f2;
-  int fd_new;
+  int fd;
+  struct proc *p =myproc();
 
-  if(argfd(0, 0, &f1) < 0 || argfd(1,&fd_new,&f2) < 0)
+  if(argfd(0, 0, &f1) < 0 || argint(1,&fd) < 0)
     return -1;
 
-  struct proc *p =myproc();
+  if((f2=myproc()->ofile[fd])!=NULL)
+    fileclose(f2);
+
+  p->ofile[fd]=filedup(f1);
   
-  fileclose(f2);
-  p->ofile[fd_new]=f1;
-  filedup(f1);
-  
-  return fd_new;
+  return fd;
 }
 
 uint64
