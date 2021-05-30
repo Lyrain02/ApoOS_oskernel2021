@@ -13,7 +13,7 @@ void test(char* name) {
     argv[0] = name;
     exec(name, argv);
   } else {
-    wait(-1);
+    wait(pid);
   }
 }
 
