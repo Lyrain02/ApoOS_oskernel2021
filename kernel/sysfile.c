@@ -73,6 +73,24 @@ sys_dup(void)
 }
 
 uint64
+sys_dup3(void)
+{
+  struct file *f1, *f2;
+  int fd_new;
+
+  if(argfd(0, 0, &f1) < 0 || argfd(1,&fd_new,&f2) < 0)
+    return -1;
+
+  struct proc *p =myproc();
+  
+  fileclose(f2);
+  p->ofile[fd_new]=f1;
+  filedup(f1);
+  
+  return fd_new;
+}
+
+uint64
 sys_read(void)
 {
   struct file *f;
