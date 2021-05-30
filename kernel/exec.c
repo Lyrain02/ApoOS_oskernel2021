@@ -63,7 +63,7 @@ int exec(char *path, char **argv)
     kpagetable[i] = 0;
   }
 
-  if((ep = ename(path)) == NULL) {
+  if((ep = ename(path,AT_FDCWD)) == NULL) {
     #ifdef DEBUG
     printf("[exec] %s not found\n", path);
     #endif

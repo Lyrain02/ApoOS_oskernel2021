@@ -809,7 +809,7 @@ forkret(void)
     // printf("[forkret]first scheduling\n");
     first = 0;
     fat32_init();
-    myproc()->cwd = ename("/");
+    myproc()->cwd = ename("/",AT_FDCWD);
   }
 
   usertrapret();

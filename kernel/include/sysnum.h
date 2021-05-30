@@ -31,6 +31,8 @@
 #define SYS_rename      26
 #define SYS_wait4       260
 #define SYS_clone       220
-#define SYS_dup3        24        
+#define SYS_dup3        24   
+#define SYS_openat      56     
+#define SYS_mkdirat     34
 
 #endif

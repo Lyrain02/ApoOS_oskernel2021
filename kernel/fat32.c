@@ -863,6 +863,9 @@ struct dirent *dirlookup(struct dirent *dp, char *filename, uint *poff)
     return NULL;
 }
 
+//将path分离到name中，返回剩余的path
+//如path为/src/etc/name.c
+//调用函数后，path为etc/name.c，name为src
 static char *skipelem(char *path, char *name)
 {
     while (*path == '/') {
@@ -886,13 +889,16 @@ static char *skipelem(char *path, char *name)
 }
 
 // FAT32 version of namex in xv6's original file system.
-static struct dirent *lookup_path(char *path, int parent, char *name)
+static struct dirent *lookup_path(char *path, int parent, char *name,int fd)
 {
     struct dirent *entry, *next;
     if (*path == '/') {
         entry = edup(&root);
     } else if (*path != '\0') {
-        entry = edup(myproc()->cwd);
+        if(fd==AT_FDCWD)
+            entry = edup(myproc()->cwd);
+        else
+            entry = edup(myproc()->ofile[fd]->ep);
     } else {
         return NULL;
     }
@@ -923,13 +929,13 @@ static struct dirent *lookup_path(char *path, int parent, char *name)
     return entry;
 }
 
-struct dirent *ename(char *path)
+struct dirent *ename(char *path,int fd)
 {
     char name[FAT32_MAX_FILENAME + 1];
-    return lookup_path(path, 0, name);
+    return lookup_path(path, 0, name,fd);
 }
 
-struct dirent *enameparent(char *path, char *name)
+struct dirent *enameparent(char *path, char *name,int fd)
 {
-    return lookup_path(path, 1, name);
+    return lookup_path(path, 1, name,fd);
 }

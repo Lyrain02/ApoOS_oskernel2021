@@ -140,12 +140,12 @@ sys_fstat(void)
 }
 
 static struct dirent*
-create(char *path, short type, int mode)
+create(char *path, short type, int mode,int fd)
 {
   struct dirent *ep, *dp;
   char name[FAT32_MAX_FILENAME + 1];
 
-  if((dp = enameparent(path, name)) == NULL)
+  if((dp = enameparent(path, name,fd)) == NULL)
     return NULL;
 
   if (type == T_DIR) {
@@ -182,24 +182,47 @@ uint64
 sys_open(void)
 {
   char path[FAT32_MAX_PATH];
-  int fd, omode;
+  int flags;
+
+  if(argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &flags) < 0)
+    return -1;
+
+  return openat(path, AT_FDCWD, flags,0);
+}
+
+uint64
+sys_openat(void)
+{
+  char path[FAT32_MAX_PATH];
+  int flags,mode,fd;
+
+  if(argint(0,&fd)<0 || argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &flags) < 0 || argint(3, &mode) < 0)
+    return -1;
+  
+  if(fd < 0 && fd!= AT_FDCWD)
+    return -1;
+
+  return openat(path, fd, flags, mode);
+}
+
+uint64
+openat(char* path, int fd_d, int flags, int mode)
+{
+  int fd;
   struct file *f;
   struct dirent *ep;
 
-  if(argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &omode) < 0)
-    return -1;
-
-  if(omode & O_CREATE){
-    ep = create(path, T_FILE, omode);
+  if(flags & O_CREATE){
+    ep = create(path, T_FILE, flags,fd_d);
     if(ep == NULL){
       return -1;
     }
   } else {
-    if((ep = ename(path)) == NULL){
+    if((ep = ename(path,fd_d)) == NULL){
       return -1;
     }
     elock(ep);
-    if((ep->attribute & ATTR_DIRECTORY) && omode != O_RDONLY){
+    if((ep->attribute & ATTR_DIRECTORY) && flags != O_RDONLY){
       eunlock(ep);
       eput(ep);
       return -1;
@@ -215,20 +238,22 @@ sys_open(void)
     return -1;
   }
 
-  if(!(ep->attribute & ATTR_DIRECTORY) && (omode & O_TRUNC)){
+  if(!(ep->attribute & ATTR_DIRECTORY) && (flags & O_TRUNC)){
     etrunc(ep);
   }
 
   f->type = FD_ENTRY;
-  f->off = (omode & O_APPEND) ? ep->file_size : 0;
+  f->off = (flags & O_APPEND) ? ep->file_size : 0;
   f->ep = ep;
-  f->readable = !(omode & O_WRONLY);
-  f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
+  f->readable = !(flags & O_WRONLY);
+  f->writable = (flags & O_WRONLY) || (flags & O_RDWR);
 
   eunlock(ep);
 
   return fd;
 }
+
+
 
 uint64
 sys_mkdir(void)
@@ -236,13 +261,43 @@ sys_mkdir(void)
   char path[FAT32_MAX_PATH];
   struct dirent *ep;
 
-  if(argstr(0, path, FAT32_MAX_PATH) < 0 || (ep = create(path, T_DIR, 0)) == 0){
+  if(argstr(0, path, FAT32_MAX_PATH) < 0 ){
+    return -1;
+  }
+
+  return mkdirat(AT_FDCWD, path, 0);
+}
+
+uint64
+sys_mkdirat(void)
+{
+  char path[FAT32_MAX_PATH];
+  int fd,mode;
+  struct dirent *ep;
+
+  if(argint(0,&fd)<0 || argstr(1, path, FAT32_MAX_PATH) < 0 || rgint(2, &mode) < 0){
+    return -1;
+  }
+
+  if(fd < 0 && fd != AT_FDCWD) {
+    return -1;
+  }  
+  return mkdirat(fd, path, mode);
+}
+
+uint64
+mkdirat(int dirfd, char* path, int mode)
+{
+  struct dirent *ep;
+
+  if((ep = create(path, T_DIR, mode, dirfd)) == 0){
     return -1;
   }
   eunlock(ep);
   eput(ep);
   return 0;
 }
+
 
 uint64
 sys_chdir(void)
@@ -251,7 +306,7 @@ sys_chdir(void)
   struct dirent *ep;
   struct proc *p = myproc();
   
-  if(argstr(0, path, FAT32_MAX_PATH) < 0 || (ep = ename(path)) == NULL){
+  if(argstr(0, path, FAT32_MAX_PATH) < 0 || (ep = ename(path,AT_FDCWD)) == NULL){
     return -1;
   }
   elock(ep);
@@ -412,7 +467,7 @@ sys_remove(void)
     return -1;
   }
   
-  if((ep = ename(path)) == NULL){
+  if((ep = ename(path,AT_FDCWD)) == NULL){
     return -1;
   }
   elock(ep);
@@ -443,7 +498,7 @@ sys_rename(void)
   struct dirent *src = NULL, *dst = NULL, *pdst = NULL;
   int srclock = 0;
   char *name;
-  if ((src = ename(old)) == NULL || (pdst = enameparent(new, old)) == NULL
+  if ((src = ename(old,AT_FDCWD)) == NULL || (pdst = enameparent(new, old, AT_FDCWD)) == NULL
       || (name = formatname(old)) == NULL) {
     goto fail;          // src doesn't exist || dst parent doesn't exist || illegal new name
   }
