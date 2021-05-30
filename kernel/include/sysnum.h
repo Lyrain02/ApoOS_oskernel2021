@@ -30,5 +30,6 @@
 #define SYS_getcwd      17
 #define SYS_rename      26
 #define SYS_wait4       260
+#define SYS_clone       220
 
 #endif

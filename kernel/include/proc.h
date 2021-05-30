@@ -96,5 +96,6 @@ void            procdump(void);
 uint64          procnum(void);
 void            test_proc_init(int);
 int             wait4(int pid, uint64 addr,int options);
+int             clone(int flag, uint64 stack);
 
 #endif

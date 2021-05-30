@@ -534,6 +534,58 @@ fork(void)
   return pid;
 }
 
+// Create a new process, copying the parent,can choose stack
+int
+clone(int flag, uint64 stack)
+{
+  if(stack==0)
+    return fork();
+  int i, pid;
+  struct proc *np;
+  struct proc *p = myproc();
+
+  // Allocate process.
+  if((np = allocproc()) == NULL){
+    return -1;
+  }
+
+  // Copy user memory from parent to child.
+  if(uvmcopy(p->pagetable, np->pagetable, np->kpagetable, p->sz) < 0){
+    freeproc(np);
+    release(&np->lock);
+    return -1;
+  }
+  np->sz = p->sz;
+
+  np->parent = p;
+
+  // copy tracing mask from parent.
+  np->tmask = p->tmask;
+
+  // copy saved user registers.
+  *(np->trapframe) = *(p->trapframe);
+
+  // Cause fork to return 0 in the child.
+  np->trapframe->a0 = 0;
+  np->trapframe->sp = stack;
+
+  // increment reference counts on open file descriptors.
+  for(i = 0; i < NOFILE; i++)
+    if(p->ofile[i])
+      np->ofile[i] = filedup(p->ofile[i]);
+  np->cwd = edup(p->cwd);
+
+  safestrcpy(np->name, p->name, sizeof(p->name));
+
+  pid = np->pid;
+
+  np->state = RUNNABLE;
+
+  release(&np->lock);
+
+  return pid;
+}
+
 // Pass p's abandoned children to init.
 // Caller must hold p->lock.
 void
