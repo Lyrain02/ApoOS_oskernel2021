@@ -4,7 +4,7 @@
 
 const int test_c = 1;
 
-char *test_name[] = {"wait"};
+char *test_name[] = {"waitpid"};
 
 void test(char* name) {
   int pid = fork();
