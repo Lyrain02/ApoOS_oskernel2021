@@ -259,7 +259,6 @@ uint64
 sys_mkdir(void)
 {
   char path[FAT32_MAX_PATH];
-  struct dirent *ep;
 
   if(argstr(0, path, FAT32_MAX_PATH) < 0 ){
     return -1;
@@ -273,9 +272,8 @@ sys_mkdirat(void)
 {
   char path[FAT32_MAX_PATH];
   int fd,mode;
-  struct dirent *ep;
 
-  if(argint(0,&fd)<0 || argstr(1, path, FAT32_MAX_PATH) < 0 || rgint(2, &mode) < 0){
+  if(argint(0,&fd)<0 || argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &mode) < 0){
     return -1;
   }
 
