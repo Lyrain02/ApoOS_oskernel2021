@@ -780,6 +780,10 @@ sched(void)
   mycpu()->intena = intena;
 }
 
+void sys_yield(void){
+    yield();
+}
+
 // Give up the CPU for one scheduling round.
 void
 yield(void)
