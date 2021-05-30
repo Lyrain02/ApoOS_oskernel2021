@@ -238,7 +238,7 @@ int getdirents(struct file* f, uint64 addr,int len,int *size){
   if(sizeof(dir)>=len)
     return -1;
 
-  if(strncpy(addr, (char *)&dir, sizeof(dir)) < 0)
+  if(copyout2(addr, (char *)&dir, sizeof(dir)) < 0)
     return -1;
 
   return 1;
