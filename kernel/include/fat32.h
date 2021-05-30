@@ -52,6 +52,15 @@ struct dirent {
     struct sleeplock    lock;
 };
 
+//used for output
+struct directory{
+    uint64 d_ino;	// 索引结点号
+    long d_off;	// 到下一个dirent的偏移
+    unsigned short d_reclen;	// 当前dirent的长度
+    unsigned char d_type;	// 文件类型
+    char d_name[];	//文件名
+};
+
 int             fat32_init(void);
 struct dirent*  dirlookup(struct dirent *entry, char *filename, uint *poff);
 char*           formatname(char *name);

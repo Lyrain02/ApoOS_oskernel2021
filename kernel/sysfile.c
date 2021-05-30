@@ -565,3 +565,18 @@ fail:
     eput(src);
   return -1;
 }
+
+uint64 sys_getdents64(void){
+  struct file *f;
+  uint64 dirent;
+  int len;
+
+  if(argfd(0,0,&f) <0 || argaddr(1,&dirent)<0 || argint(2,&len)<0)
+    return -1;
+  
+  if(f->readable == 0 || !(f->ep->attribute & ATTR_DIRECTORY))
+    return -1;
+
+  return getdents(f,dirent,len);
+}
+

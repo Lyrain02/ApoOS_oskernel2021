@@ -207,3 +207,38 @@ dirnext(struct file *f, uint64 addr)
 
   return 1;
 }
+
+int getdirents(struct file* f, uint64 addr,int len){
+
+  if(f->readable == 0 || !(f->ep->attribute & ATTR_DIRECTORY))
+    return -1;
+
+  struct dirent de;
+  struct directory dir;
+  int count = 0;
+  int ret;
+
+  elock(f->ep);
+  while ((ret = enext(f->ep, &de, f->off, &count)) == 0) {  // skip empty entry
+    f->off += count * 32;
+  }
+  eunlock(f->ep);
+  if (ret == -1)
+    return 0;
+
+  f->off += count * 32;
+  
+  dir.d_ino = de.first_clus;
+  dir.d_reclen = de.file_size;
+  dir.d_off = de.off;
+  dir.d_type = T_DIR;
+  strncpy(dir.d_name,de.filename,strlen(de.filename));
+
+  if(sizeof(dir)>=len)
+    return -1;
+
+  if(copyout2(addr, (char *)&dir, sizeof(dir)) < 0)
+    return -1;
+
+  return 1;
+}

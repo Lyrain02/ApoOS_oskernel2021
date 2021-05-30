@@ -34,5 +34,6 @@
 #define SYS_dup3        24   
 #define SYS_openat      56     
 #define SYS_mkdirat     34
+#define SYS_getdents64  61
 
 #endif

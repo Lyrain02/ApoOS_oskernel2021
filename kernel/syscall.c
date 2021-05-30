@@ -122,6 +122,7 @@ extern uint64 sys_clone(void);
 extern uint64 sys_dup3(void);
 extern uint64 sys_openat(void);
 extern uint64 sys_mkdirat(void);
+extern uint64 sys_getdents64(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -160,6 +161,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_dup3]         sys_dup3,
   [SYS_openat]       sys_openat,
   [SYS_mkdirat]      sys_mkdirat,
+  [SYS_getdents64]   sys_getdents64,
 };
 
 static char *sysnames[] = {
@@ -195,6 +197,7 @@ static char *sysnames[] = {
   [SYS_dup3]        "dup3",
   [SYS_openat]      "openat",
   [SYS_mkdirat]     "mkdirat",
+  [SYS_getdents64]  "getdents64",
 };
 
 void
