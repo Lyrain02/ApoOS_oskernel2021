@@ -570,6 +570,7 @@ uint64 sys_getdents64(void){
   struct file *f;
   uint64 dirent;
   int len;
+  
 
   if(argfd(0,0,&f) <0 || argaddr(1,&dirent)<0 || argint(2,&len)<0)
     return -1;
@@ -577,6 +578,11 @@ uint64 sys_getdents64(void){
   if(f->readable == 0 || !(f->ep->attribute & ATTR_DIRECTORY))
     return -1;
 
-  return getdirents(f,dirent,len);
+  int size,res=0;
+  while(getdirents(f, dirent, len - res, &size)==1){
+    res+=size;
+    dirent+=size;
+  }
+  return res;
 }
 

@@ -34,6 +34,6 @@ int             fileread(struct file*, uint64, int n);
 int             filestat(struct file*, uint64 addr);
 int             filewrite(struct file*, uint64, int n);
 int             dirnext(struct file *f, uint64 addr);
-int             getdirents(struct file* f, uint64 addr,int len);
+int             getdirents(struct file* f, uint64 addr,int len,int *size);
 
 #endif

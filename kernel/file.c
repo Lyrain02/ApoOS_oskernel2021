@@ -208,7 +208,7 @@ dirnext(struct file *f, uint64 addr)
   return 1;
 }
 
-int getdirents(struct file* f, uint64 addr,int len){
+int getdirents(struct file* f, uint64 addr,int len,int *size){
 
   if(f->readable == 0 || !(f->ep->attribute & ATTR_DIRECTORY))
     return -1;
@@ -230,9 +230,10 @@ int getdirents(struct file* f, uint64 addr,int len){
   
   dir.d_ino = de.first_clus;
   dir.d_reclen = de.file_size;
-  dir.d_off = de.off;
+  dir.d_off = addr + de.off;
   dir.d_type = T_DIR;
   strncpy(dir.d_name,de.filename,strlen(de.filename));
+  *size = dir.d_reclen;
 
   if(sizeof(dir)>=len)
     return -1;
