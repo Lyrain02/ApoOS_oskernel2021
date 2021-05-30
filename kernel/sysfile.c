@@ -577,6 +577,6 @@ uint64 sys_getdents64(void){
   if(f->readable == 0 || !(f->ep->attribute & ATTR_DIRECTORY))
     return -1;
 
-  return getdents(f,dirent,len);
+  return getdirents(f,dirent,len);
 }
 
