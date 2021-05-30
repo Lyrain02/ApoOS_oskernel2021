@@ -126,8 +126,8 @@ ifeq ($(platform), k210)
 	@dd if=$(image) of=$(k210) bs=128k seek=1
 	cp $(k210) k210.bin
 	@$(OBJDUMP) -D -b binary -m riscv $(k210) > $T/k210.asm
-# @sudo chmod 777 $(k210-serialport)
-# @python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
+	 @sudo chmod 777 $(k210-serialport)
+	 @python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
 else
 	@$(QEMU) $(QEMUOPTS)
 endif
