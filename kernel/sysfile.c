@@ -222,11 +222,11 @@ openat(char* path, int fd_d, int flags, int mode)
       return -1;
     }
     elock(ep);
-    if((ep->attribute & ATTR_DIRECTORY) && flags != O_RDONLY){
-      eunlock(ep);
-      eput(ep);
-      return -1;
-    }
+    // if((ep->attribute & ATTR_DIRECTORY) && flags != O_RDONLY){
+    //   eunlock(ep);
+    //   eput(ep);
+    //   return -1;
+    // }
   }
 
   if((f = filealloc()) == NULL || (fd = fdalloc(f)) < 0){
