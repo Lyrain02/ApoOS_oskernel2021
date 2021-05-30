@@ -233,7 +233,7 @@ int getdirents(struct file* f, uint64 addr,int len,int *size){
   dir.d_off = addr + de.off;
   dir.d_type = T_DIR;
   strncpy(dir.d_name,de.filename,strlen(de.filename));
-  *size = dir.d_reclen;
+  *size = sizeof(dir);
 
   if(sizeof(dir)>=len)
     return -1;
