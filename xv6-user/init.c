@@ -2,17 +2,9 @@
 
 #include "xv6-user/user.h"
 
-const int test_c = 31;
+const int test_c = 1;
 
-char *test_name[] = {"read","write","getcwd","getpid"
-                     ,"getppid","brk","open","pipe"
-                     ,"close","fork","openat","dup"
-                     ,"exit","chdir","execve","getdents"
-                     ,"mkdir_","times","umount","uname"
-                     ,"unlink","clone","wait","waitpid"
-                     ,"yield","fstat","dup2","gettimeofday"
-                     ,"mmap","mount","munmap"
-};
+char *test_name[] = {"yield"};
 
 void test(char* name) {
   int pid = fork();
@@ -20,6 +12,8 @@ void test(char* name) {
   if (pid == 0) {
     argv[0] = name;
     exec(name, argv);
+  } else{
+      wait(0);
   }
 }
 
