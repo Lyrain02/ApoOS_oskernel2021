@@ -13,6 +13,8 @@
 #define WUNTRACED   0x02
 #define WCONTINUED  0x04
 
+#define SIGCHLD     0x01
+
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;
