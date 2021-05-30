@@ -677,7 +677,7 @@ wait4(int pid, uint64 addr,int options)
       if(np->state == ZOMBIE){
         // Found one.
         res_pid = np->pid;
-        res_status = np->xstate;
+        res_status = np->xstate<<8;
         if(addr != 0 && copyout2(addr, (char *)&res_status, sizeof(res_status)) < 0) {
           release(&np->lock);
           release(&p->lock);
