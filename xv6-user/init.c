@@ -20,8 +20,6 @@ void test(char* name) {
   if (pid == 0) {
     argv[0] = name;
     exec(name, argv);
-  } else {
-    wait(-1);
   }
 }
 
