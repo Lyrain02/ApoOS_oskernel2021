@@ -7,16 +7,7 @@
     <configurations />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="33912848-e072-4164-8205-baa5dffbeb0e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kernel/proc.c" beforeDir="false" afterPath="$PROJECT_DIR$/kernel/proc.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kernel/sysproc.c" beforeDir="false" afterPath="$PROJECT_DIR$/kernel/sysproc.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xv6-user/_new_init_obj.txt" beforeDir="false" afterPath="$PROJECT_DIR$/xv6-user/_new_init_obj.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xv6-user/_test" beforeDir="false" afterPath="$PROJECT_DIR$/xv6-user/_test" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xv6-user/init.c" beforeDir="false" afterPath="$PROJECT_DIR$/xv6-user/init.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/xv6-user/init_obj.txt" beforeDir="false" afterPath="$PROJECT_DIR$/xv6-user/init_obj.txt" afterDir="false" />
-    </list>
+    <list default="true" id="33912848-e072-4164-8205-baa5dffbeb0e" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -48,7 +39,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1622384867102</updated>
-      <workItem from="1622384878469" duration="1326000" />
+      <workItem from="1622384878469" duration="2104000" />
     </task>
     <servers />
   </component>
