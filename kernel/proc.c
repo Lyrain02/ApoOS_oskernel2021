@@ -507,7 +507,6 @@ clone(int flag, uint64 stack)
   np->state = RUNNABLE;
 
   release(&np->lock);
-
   return pid;
 }
 
@@ -615,9 +614,8 @@ wait(uint64 addr)
 int
 wait4(int pid, uint64 addr,int options)
 {
-  if(pid != -1 && pid <= 0){
-//      printf("1\n");
-    return -1;}
+  if(pid != -1 && pid <= 0)
+    return -1;
   
   struct proc *np;
   int havekids,res_status,res_pid;
@@ -646,17 +644,15 @@ wait4(int pid, uint64 addr,int options)
       if(np->state == ZOMBIE){
         // Found one.
         res_pid = np->pid;
-        res_status = np->xstate;
+        res_status = np->xstate<<8;
         if(addr != 0 && copyout2(addr, (char *)&res_status, sizeof(res_status)) < 0) {
           release(&np->lock);
           release(&p->lock);
-//            printf("2\n");
           return -1;
         }
         freeproc(np);
         release(&np->lock);
         release(&p->lock);
-//          printf("3\n");
         return res_pid;
       }
       release(&np->lock);
@@ -665,13 +661,11 @@ wait4(int pid, uint64 addr,int options)
     // No point waiting if we don't have any children.
     if(!havekids || p->killed){
       release(&p->lock);
-//        printf("4\n");
       return -1;
     }
     
-    if(options & WNOHANG){
-//        printf("5\n");
-      return 0;}
+    if(options & WNOHANG)
+      return 0;
     // Wait for a child to exit.
     sleep(p, &p->lock);  //DOC: wait-sleep
   }
