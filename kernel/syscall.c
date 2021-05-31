@@ -152,17 +152,16 @@ static uint64 (*syscalls[])(void) = {
   [SYS_trace]       sys_trace,
   [SYS_sysinfo]     sys_sysinfo,
   [SYS_rename]      sys_rename,
-
-  [SYS_execve]       sys_exec,
-  [SYS_brk]          sys_sbrk,
-  [SYS_getppid]      sys_getppid,
-  [SYS_wait4]        sys_wait4,
-  [SYS_clone]        sys_clone,
-  [SYS_dup3]         sys_dup3,
-  [SYS_openat]       sys_openat,
-  [SYS_mkdirat]      sys_mkdirat,
-  [SYS_getdents64]   sys_getdents64,
-  [SYS_sched_yield]  sys_yield
+  [SYS_getppid]       sys_getppid,
+  [SYS_wait4]         sys_wait4,
+  [SYS_clone]         sys_clone,
+  [SYS_dup3]          sys_dup3,
+  [SYS_openat]        sys_openat,
+  [SYS_mkdirat]       sys_mkdirat,
+  [SYS_getdents64]    sys_getdents64,
+  [SYS_sched_yield]   sys_yield,
+  [SYS_execve]        sys_exec,
+  [SYS_brk]           sys_sbrk,
 };
 
 static char *sysnames[] = {
@@ -199,7 +198,9 @@ static char *sysnames[] = {
   [SYS_openat]      "openat",
   [SYS_mkdirat]     "mkdirat",
   [SYS_getdents64]  "getdents64",
-  [SYS_sched_yield]  "sys_yield"
+  [SYS_sched_yield] "yield",
+  [SYS_execve]      "exec",
+  [SYS_brk]         "sbrk",
 };
 
 void
