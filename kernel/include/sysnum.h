@@ -35,5 +35,8 @@
 #define SYS_openat      56     
 #define SYS_mkdirat     34
 #define SYS_getdents64  61
+#define SYS_sched_yield 124
+#define SYS_execve      221
+#define SYS_brk         214
 
 #endif
