@@ -4,9 +4,9 @@
 
 const int test_c = 31;
 
-char *test_name[] = {"yield","wait","fstat","mkdir_","read","write","getcwd",
+char *test_name[] = {"wait","fstat","mkdir_","read","write","getcwd",
   "getpid","getppid","open","pipe","dup","dup2","exit","execve",
-  "brk","close","clone","chdir","fork","openat","waitpid","getdents","times",
+  "brk","close","clone","chdir","fork","openat","waitpid","getdents","yield","times",
   "umount","uname","unlink","gettimeofday","mmap","mount","munmap"};
 
 void test(char* name) {
