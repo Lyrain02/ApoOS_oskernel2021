@@ -1,33 +1,52 @@
 // init: The initial user-level program
 
+#include "kernel/include/types.h"
+#include "kernel/include/stat.h"
+#include "kernel/include/file.h"
+#include "kernel/include/fcntl.h"
 #include "xv6-user/user.h"
 
-const int test_c = 31;
-
-char *test_name[] = {"fstat","openat","mkdir_","read","write","getcwd","getpid","getppid","open","pipe","fork","dup","dup2","exit","execve","brk","close","clone","chdir","wait","waitpid","yield","getdents","times","umount","uname","unlink","gettimeofday","mmap","mount","munmap"};
-
-void test(char* name) {
-  int pid = fork();
-  char *argv[2];
-  if (pid == 0) {
-    argv[0] = name;
-    exec(name, argv);
-  } else {
-    wait(0);
-  }
-}
+char *argv[] = { "sh", 0 };
 
 int
 main(void)
 {
-  dev(O_RDWR, 1, 0);
-  dup(0);
-  dup(0);
+  int pid, wpid;
 
-  int i;
-  for (i = 0; i < test_c; i++) {
-    test(test_name[i]);
+  // if(open("console", O_RDWR) < 0){
+  //   mknod("console", CONSOLE, 0);
+  //   open("console", O_RDWR);
+  // }
+  dev(O_RDWR, CONSOLE, 0);
+  dup(0);  // stdout
+  dup(0);  // stderr
+
+  for(;;){
+    printf("init: starting sh\n");
+    pid = fork();
+    if(pid < 0){
+      printf("init: fork failed\n");
+      exit(1);
+    }
+    if(pid == 0){
+      exec("sh", argv);
+      printf("init: exec sh failed\n");
+      exit(1);
+    }
+
+    for(;;){
+      // this call to wait() returns if the shell exits,
+      // or if a parentless process exits.
+      wpid = wait((int *) 0);
+      if(wpid == pid){
+        // the shell exited; restart it.
+        break;
+      } else if(wpid < 0){
+        printf("init: wait returned an error\n");
+        exit(1);
+      } else {
+        // it was a parentless process; do nothing.
+      }
+    }
   }
-
-  for(;;);
 }

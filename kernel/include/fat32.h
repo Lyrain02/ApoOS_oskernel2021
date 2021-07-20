@@ -23,8 +23,6 @@
 #define FAT32_MAX_PATH      260
 #define ENTRY_CACHE_NUM     50
 
-#define AT_FDCWD (-100)
-
 struct dirent {
     char  filename[FAT32_MAX_FILENAME + 1];
     uint8   attribute;
@@ -66,11 +64,9 @@ void            estat(struct dirent *ep, struct stat *st);
 void            elock(struct dirent *entry);
 void            eunlock(struct dirent *entry);
 int             enext(struct dirent *dp, struct dirent *ep, uint off, int *count);
-struct dirent*  ename(char *path,int fd);
-struct dirent*  enameparent(char *path, char *name,int fd);
+struct dirent*  ename(char *path);
+struct dirent*  enameparent(char *path, char *name);
 int             eread(struct dirent *entry, int user_dst, uint64 dst, uint off, uint n);
 int             ewrite(struct dirent *entry, int user_src, uint64 src, uint off, uint n);
 
-uint64          openat(char* path, int fd_d, int flags, int mode);
-uint64          mkdirat(int dirfd, char* path, int mode);
 #endif

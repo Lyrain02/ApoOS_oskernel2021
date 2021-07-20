@@ -116,12 +116,6 @@ extern uint64 sys_remove(void);
 extern uint64 sys_trace(void);
 extern uint64 sys_sysinfo(void);
 extern uint64 sys_rename(void);
-extern uint64 sys_getppid(void);
-extern uint64 sys_wait4(void);
-extern uint64 sys_clone(void);
-extern uint64 sys_dup3(void);
-extern uint64 sys_openat(void);
-extern uint64 sys_mkdirat(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -150,14 +144,21 @@ static uint64 (*syscalls[])(void) = {
   [SYS_trace]       sys_trace,
   [SYS_sysinfo]     sys_sysinfo,
   [SYS_rename]      sys_rename,
+        [64] sys_write,
+        [93] sys_exit,
+        [220] sys_fork,
+        [260] sys_wait,
+        [59] sys_pipe,
+        [49] sys_chdir,
+        [56] sys_open,
+        [57] sys_close,
+        [63] sys_read,
+        [34] sys_mkdir,
+        [80] sys_fstat,
         [221] sys_exec,
+        [172] sys_getpid,
         [214] sys_sbrk,
-  [SYS_getppid]      sys_getppid,
-  [SYS_wait4]        sys_wait4,
-  [SYS_clone]        sys_clone,
-  [SYS_dup3]         sys_dup3,
-  [SYS_openat]       sys_openat,
-  [SYS_mkdirat]      sys_mkdirat,
+        [160] sys_sysinfo
 };
 
 static char *sysnames[] = {
@@ -187,12 +188,6 @@ static char *sysnames[] = {
   [SYS_trace]       "trace",
   [SYS_sysinfo]     "sysinfo",
   [SYS_rename]      "rename",
-  [SYS_getppid]     "getppid",
-  [SYS_wait4]       "wait4",
-  [SYS_clone]       "clone",
-  [SYS_dup3]        "dup3",
-  [SYS_openat]      "openat",
-  [SYS_mkdirat]     "mkdirat",
 };
 
 void
@@ -202,6 +197,7 @@ syscall(void)
   struct proc *p = myproc();
 
   num = p->trapframe->a7;
+//  printf("syscall num %d\n",num);
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     p->trapframe->a0 = syscalls[num]();
         // trace
@@ -215,7 +211,7 @@ syscall(void)
   }
 }
 
-uint64 
+uint64
 sys_test_proc(void) {
     int n;
     argint(0, &n);

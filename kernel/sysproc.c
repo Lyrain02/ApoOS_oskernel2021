@@ -19,7 +19,7 @@ sys_exec(void)
   char path[FAT32_MAX_PATH], *argv[MAXARG];
   int i;
   uint64 uargv, uarg;
-
+//  printf("exec======================================\n");
   if(argstr(0, path, FAT32_MAX_PATH) < 0 || argaddr(1, &uargv) < 0){
     return -1;
   }
@@ -41,9 +41,9 @@ sys_exec(void)
     if(fetchstr(uarg, argv[i], PGSIZE) < 0)
       goto bad;
   }
-
+//    printf("path============%s\n",path);
+//    printf("argv============%s\n",argv[1]);
   int ret = exec(path, argv);
-
   for(i = 0; i < NELEM(argv) && argv[i] != 0; i++)
     kfree(argv[i]);
 
@@ -72,27 +72,9 @@ sys_getpid(void)
 }
 
 uint64
-sys_getppid(void)
-{
-  return myproc()->parent->pid;
-}
-
-uint64
 sys_fork(void)
 {
   return fork();
-}
- 
-uint64
-sys_clone(void)
-{
-  int flag;
-  uint64 stack;
-
-  if(argint(0,&flag)<0 || argaddr(1,&stack) <0)
-    return -1; 
-
-  return clone(flag,stack);
 }
 
 uint64
@@ -103,19 +85,6 @@ sys_wait(void)
     return -1;
   return wait(p);
 }
-
-uint64
-sys_wait4(void)
-{
-  int pid, options;
-  uint64 status;
-  if(argint(0, &pid) < 0 || argaddr(1, &status)<0 || argint(2,&options)<0)
-    return -1;
-   
-  return wait4(pid,status,options);
-}
-
-
 
 uint64
 sys_sbrk(void)

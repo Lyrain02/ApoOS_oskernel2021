@@ -53,7 +53,7 @@ int exec(char *path, char **argv)
   pagetable_t kpagetable = 0, oldkpagetable;
   struct proc *p = myproc();
 
-  // Make a copy of p->kpt without old user space, 
+  // Make a copy of p->kpt without old user space,
   // but with the same kstack we are using now, which can't be changed
   if ((kpagetable = (pagetable_t)kalloc()) == NULL) {
     return -1;
@@ -63,7 +63,7 @@ int exec(char *path, char **argv)
     kpagetable[i] = 0;
   }
 
-  if((ep = ename(path,AT_FDCWD)) == NULL) {
+  if((ep = ename(path)) == NULL) {
     #ifdef DEBUG
     printf("[exec] %s not found\n", path);
     #endif
@@ -148,7 +148,7 @@ int exec(char *path, char **argv)
     if(*s == '/')
       last = s+1;
   safestrcpy(p->name, last, sizeof(p->name));
-    
+
   // Commit to the user image.
   oldpagetable = p->pagetable;
   oldkpagetable = p->kpagetable;

@@ -1,5 +1,5 @@
 platform	:= k210
-# platform	:= qemu
+#platform	:= qemu
 # mode := debug
 mode := release
 K=kernel
@@ -65,15 +65,15 @@ else
 RUSTSBI = ./bootloader/SBI/sbi-qemu
 endif
 
-TOOLPREFIX	:= riscv64-unknown-elf-
-# TOOLPREFIX	:= riscv64-linux-
+# TOOLPREFIX	:= riscv64-unknown-elf-
+TOOLPREFIX	:= riscv64-linux-gnu-
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
-CFLAGS = -Wall -O -fno-omit-frame-pointer -ggdb -g
+CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -g
 CFLAGS += -MD
 CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
@@ -98,42 +98,6 @@ ifeq ($(platform), qemu)
 linker = ./linker/qemu.ld
 endif
 
-image = $T/kernel.bin
-k210 = $T/k210.bin
-k210-serialport := /dev/ttyUSB0
-
-ifndef CPUS
-CPUS := 2
-endif
-
-QEMUOPTS = -machine virt -kernel $T/kernel -m 8M -nographic
-
-# use multi-core 
-QEMUOPTS += -smp $(CPUS)
-
-QEMUOPTS += -bios $(RUSTSBI)
-
-# import virtual disk image
-QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0 
-QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
-
-
-
-all: build
-ifeq ($(platform), k210)
-	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
-	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
-	@dd if=$(image) of=$(k210) bs=128k seek=1
-	cp $(k210) k210.bin
-	@$(OBJDUMP) -D -b binary -m riscv $(k210) > $T/k210.asm
-# @sudo chmod 777 $(k210-serialport)
-# @python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
-else
-	@$(QEMU) $(QEMUOPTS)
-endif
-
-
-
 # Compile Kernel
 $T/kernel: $(OBJS) $(linker) $U/initcode
 	@if [ ! -d "./target" ]; then mkdir target; fi
@@ -156,6 +120,51 @@ endif
 rustsbi-clean:
 	@cd ./bootloader/SBI/rustsbi-k210 && cargo clean
 	@cd ./bootloader/SBI/rustsbi-qemu && cargo clean
+
+image = $T/kernel.bin
+k210 = $T/k210.bin
+k210-serialport := /dev/ttyUSB0
+
+ifndef CPUS
+CPUS := 2
+endif
+
+QEMUOPTS = -machine virt -kernel $T/kernel -m 8M -nographic
+
+# use multi-core 
+QEMUOPTS += -smp $(CPUS)
+
+QEMUOPTS += -bios $(RUSTSBI)
+
+# import virtual disk image
+QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0 
+QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
+
+run: build
+ifeq ($(platform), k210)
+	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
+	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
+	@dd if=$(image) of=$(k210) bs=128k seek=1
+	@$(OBJDUMP) -D -b binary -m riscv $(k210) > $T/k210.asm
+	@sudo chmod 777 $(k210-serialport)
+	@python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
+else
+	@$(QEMU) $(QEMUOPTS)
+endif
+
+all: build
+ifeq ($(platform), k210)
+	@$(OBJCOPY) $T/kernel --strip-all -O binary $(image)
+	@$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(k210)
+	@dd if=$(image) of=$(k210) bs=128k seek=1
+	cp $(k210) k210.bin
+	@$(OBJDUMP) -D -b binary -m riscv $(k210) > $T/k210.asm
+# @sudo chmod 777 $(k210-serialport)
+# @python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(k210)
+else
+	@$(QEMU) $(QEMUOPTS)
+endif
+
 $U/initcode: $U/initcode.S
 	$(CC) $(CFLAGS) -march=rv64g -nostdinc -I. -Ikernel -c $U/initcode.S -o $U/initcode.o
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $U/initcode.out $U/initcode.o
@@ -171,6 +180,9 @@ _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
 	$(OBJDUMP) -S $@ > $*.asm
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
+
+$U/busybox : $U/busybox.a $(ULIB)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
 
 $U/usys.S : $U/usys.pl
 	@perl $U/usys.pl > $U/usys.S
@@ -193,21 +205,23 @@ $U/_forktest: $U/forktest.o $(ULIB)
 UPROGS=\
 	$U/_init\
 	$U/_sh\
+	$U/_cat\
+	$U/_echo\
+	$U/_grep\
 	$U/_ls\
-	# $U/_cat\
-	# $U/_echo\
-	# $U/_grep\
-	# $U/_kill\
-	# $U/_mkdir\
-	# $U/_xargs\
-	# $U/_sleep\
-	# $U/_find\
-	# $U/_rm\
-	# $U/_wc\
-	# $U/_test\
-	# $U/_usertests\
-	# $U/_strace\
-	# $U/_mv\
+	$U/_kill\
+	$U/_mkdir\
+	$U/_xargs\
+	$U/_sleep\
+	$U/_find\
+	$U/_rm\
+	$U/_wc\
+	$U/_test\
+	$U/_usertests\
+	$U/_strace\
+	$U/_mv\
+	$U/_hello\
+
 	# $U/_forktest\
 	# $U/_ln\
 	# $U/_stressfs\
@@ -215,7 +229,7 @@ UPROGS=\
 	# $U/_zombie\
 
 userprogs: $(UPROGS)
-
+busybox: $U/busybox
 dst=/mnt
 
 # @sudo cp $U/_init $(dst)/init
@@ -232,9 +246,6 @@ fs: $(UPROGS)
 	@for file in $$( ls $U/_* ); do \
 		sudo cp $$file $(dst)/$${file#$U/_};\
 		sudo cp $$file $(dst)/bin/$${file#$U/_}; done
-#	@sudo cp -r $U/riscv64 $(dst)
-	@for file in $$( ls $U/riscv64 ); do \
-		sudo cp $U/riscv64/$$file $(dst)/$${file}; done
 	@sudo umount $(dst)
 
 # Write mounted sdcard

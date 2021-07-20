@@ -9,12 +9,6 @@
 #include "fat32.h"
 #include "trap.h"
 
-#define WNOHANG     0x01
-#define WUNTRACED   0x02
-#define WCONTINUED  0x04
-
-#define SIGCHLD     17
-
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;
@@ -97,7 +91,5 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 uint64          procnum(void);
 void            test_proc_init(int);
-int             wait4(int pid, uint64 addr,int options);
-int             clone(int flag, uint64 stack);
 
 #endif
